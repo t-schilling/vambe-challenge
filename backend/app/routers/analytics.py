@@ -193,12 +193,13 @@ async def by_meeting_depth(db: AsyncSession = Depends(get_db)):
 
 @router.get("/timeline")
 async def timeline(db: AsyncSession = Depends(get_db)):
+    month_expr = func.to_char(Client.fecha_reunion, "YYYY-MM").label("month")
     result = await db.execute(
         select(
-            func.strftime("%Y-%m", Client.fecha_reunion).label("month"),
+            month_expr,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.fecha_reunion.isnot(None)).group_by("month").order_by("month")
+        ).where(Client.fecha_reunion.isnot(None)).group_by(month_expr).order_by(month_expr)
     )
     return [
         {"month": r.month, "total": r.total, "closed": int(r.closed or 0),
