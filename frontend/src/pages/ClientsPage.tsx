@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
 
 interface Client {
   id: number
@@ -65,6 +64,14 @@ const COLUMNS: { key: SortField | null; label: string }[] = [
 
 const inputClass = "h-8 rounded-md border border-input bg-transparent px-2.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
 
+function SortIcon({ col, sortBy, sortOrder }: { col: SortField | null; sortBy: SortField; sortOrder: "asc" | "desc" }) {
+  if (!col) return null
+  if (sortBy !== col) return <ChevronsUpDown className="ml-1 inline size-3 text-muted-foreground" />
+  return sortOrder === "asc"
+    ? <ChevronUp className="ml-1 inline size-3" />
+    : <ChevronDown className="ml-1 inline size-3" />
+}
+
 export default function ClientsPage() {
   const { apiParams } = useFilters()
   const [page, setPage] = useState(1)
@@ -86,11 +93,12 @@ export default function ClientsPage() {
     sort_by: sortBy,
     sort_order: sortOrder,
     ...(search && { search }),
-    ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== "")),
+    ...Object.fromEntries(
+      Object.entries(filters).filter(([k, v]) => v !== "" && k !== "closed")
+    ),
   }
   if (filters.closed === "true") queryParams.closed = true
   else if (filters.closed === "false") queryParams.closed = false
-  else delete queryParams.closed
 
   const { data, isLoading } = useQuery({
     queryKey: ["clients", queryParams],
@@ -126,14 +134,6 @@ export default function ClientsPage() {
     setPage(1)
   }
 
-  function SortIcon({ col }: { col: SortField | null }) {
-    if (!col) return null
-    if (sortBy !== col) return <ChevronsUpDown className="ml-1 inline size-3 text-muted-foreground" />
-    return sortOrder === "asc"
-      ? <ChevronUp className="ml-1 inline size-3" />
-      : <ChevronDown className="ml-1 inline size-3" />
-  }
-
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Clientes</h1>
@@ -161,6 +161,7 @@ export default function ClientsPage() {
 
             {/* Filter selects */}
             {([
+              ["vendedor", "Vendedor"],
               ["sector", "Sector"],
               ["client_sentiment", "Sentiment"],
               ["primary_use_case", "Use Case"],
@@ -226,7 +227,7 @@ export default function ClientsPage() {
                         onClick={() => key && handleSort(key)}
                       >
                         {label}
-                        <SortIcon col={key} />
+                        <SortIcon col={key} sortBy={sortBy} sortOrder={sortOrder} />
                       </th>
                     ))}
                   </tr>
@@ -334,7 +335,7 @@ export default function ClientsPage() {
                   <span className="font-medium text-muted-foreground">Integraciones:</span>{" "}
                   <div className="mt-1 flex flex-wrap gap-1">
                     {selected.integration_needs.map((n) => (
-                      <Badge key={n} variant="secondary">{n}</Badge>
+                      <span key={n} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{n}</span>
                     ))}
                   </div>
                 </div>
