@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, text
 from collections import defaultdict
 from datetime import date as date_type
 from typing import Optional
@@ -273,6 +273,60 @@ async def timeline(
          "close_rate": close_rate(int(r.closed or 0), r.total)}
         for r in result.all()
     ]
+
+
+@router.get("/by-company-size")
+async def by_company_size(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
+        select(
+            Client.company_size,
+            func.count(Client.id).label("total"),
+            func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
+        ).where(Client.company_size.isnot(None)).group_by(Client.company_size),
+        gf,
+    )
+    result = await db.execute(q)
+    order = {"startup": 0, "small": 1, "medium": 2, "large": 3}
+    rows = sorted(result.all(), key=lambda r: order.get(r.company_size, 99))
+    return [
+        {"company_size": r.company_size, "total": r.total, "closed": int(r.closed or 0),
+         "close_rate": close_rate(int(r.closed or 0), r.total)}
+        for r in rows
+    ]
+
+
+@router.get("/by-integration-needs")
+async def by_integration_needs(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    conditions = ["integration_needs IS NOT NULL"]
+    params: dict = {}
+    if gf["vendedor"]:
+        conditions.append("vendedor = :vendedor")
+        params["vendedor"] = gf["vendedor"]
+    if gf["date_from"]:
+        conditions.append("fecha_reunion >= :date_from")
+        params["date_from"] = gf["date_from"]
+    if gf["date_to"]:
+        conditions.append("fecha_reunion <= :date_to")
+        params["date_to"] = gf["date_to"]
+
+    where = " AND ".join(conditions)
+    result = await db.execute(
+        text(f"""
+            SELECT value AS need, COUNT(*) AS total
+            FROM clients, json_array_elements_text(integration_needs::json) AS value
+            WHERE {where}
+            GROUP BY value
+            ORDER BY total DESC
+        """),
+        params,
+    )
+    return [{"need": r.need, "total": r.total} for r in result.all()]
 
 
 @router.post("/insights", response_model=InsightResponse)

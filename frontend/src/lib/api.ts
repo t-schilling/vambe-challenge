@@ -36,6 +36,12 @@ export const getByPainPoint = (params?: Record<string, string>) =>
 export const getByMeetingDepth = (params?: Record<string, string>) =>
   api.get("/api/analytics/by-meeting-depth", { params }).then((r) => r.data)
 
+export const getByCompanySize = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-company-size", { params }).then((r) => r.data)
+
+export const getByIntegrationNeeds = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-integration-needs", { params }).then((r) => r.data)
+
 export const getTimeline = (params?: Record<string, string>) =>
   api.get("/api/analytics/timeline", { params }).then((r) => r.data)
 
