@@ -1,3 +1,12 @@
+interface SalespersonRow {
+  vendedor: string
+  total: number
+  closed: number
+  close_rate: number
+  avg_words: number
+  meeting_depth_distribution: Record<string, number>
+}
+
 import { useQuery } from "@tanstack/react-query"
 import {
   BarChart,
@@ -96,10 +105,15 @@ export default function SalespersonPage() {
                   <th className="pb-2 pr-4 font-medium text-right">Cerrados</th>
                   <th className="pb-2 pr-4 font-medium text-right">Tasa cierre</th>
                   <th className="pb-2 pr-4 font-medium text-right">Avg palabras</th>
+                  <th className="pb-2 pr-4 font-medium text-right">% Deep</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {rows.map((r) => {
+                  const pctDeep = r.total > 0
+                    ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100)
+                    : 0
+                  return (
                   <tr key={r.vendedor} className="border-b last:border-0">
                     <td className="py-2.5 pr-4 font-medium">{r.vendedor}</td>
                     <td className="py-2.5 pr-4 text-right">{r.total}</td>
@@ -118,8 +132,10 @@ export default function SalespersonPage() {
                       </span>
                     </td>
                     <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
+                    <td className="py-2.5 pr-4 text-right">{pctDeep}%</td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -192,13 +208,4 @@ export default function SalespersonPage() {
       </Card>
     </div>
   )
-}
-
-interface SalespersonRow {
-  vendedor: string
-  total: number
-  closed: number
-  close_rate: number
-  avg_words: number
-  meeting_depth_distribution: Record<string, number>
 }
