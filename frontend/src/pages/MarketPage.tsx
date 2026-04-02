@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts"
 import { Loader2 } from "lucide-react"
 import { useFilters } from "@/contexts/FiltersContext"
@@ -21,8 +20,6 @@ import {
 } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const VOLUME_ORDER = ["small", "medium", "large", "unknown"]
-const COMPANY_ORDER = ["startup", "small", "medium", "large"]
 
 function HorizontalBar({
   data,
@@ -96,22 +93,17 @@ export default function MarketPage() {
   const sectorData = (sectors ?? []).map((r: Record<string, unknown>) => ({
     sector: r.sector,
     "Tasa cierre": r.close_rate,
-    "Reuniones": r.total,
   }))
 
-  const volumeData = (volumes ?? []).sort(
-    (a: Record<string, unknown>, b: Record<string, unknown>) =>
-      VOLUME_ORDER.indexOf(a.tier as string) - VOLUME_ORDER.indexOf(b.tier as string)
-  ).map((r: Record<string, unknown>) => ({
+  // Backend already returns sorted by VOLUME_ORDER
+  const volumeData = (volumes ?? []).map((r: Record<string, unknown>) => ({
     tier: r.tier,
     "Tasa cierre": r.close_rate,
     "Reuniones": r.total,
   }))
 
-  const companySizeData = (companySizes ?? []).sort(
-    (a: Record<string, unknown>, b: Record<string, unknown>) =>
-      COMPANY_ORDER.indexOf(a.company_size as string) - COMPANY_ORDER.indexOf(b.company_size as string)
-  ).map((r: Record<string, unknown>) => ({
+  // Backend already returns sorted by COMPANY_ORDER
+  const companySizeData = (companySizes ?? []).map((r: Record<string, unknown>) => ({
     company_size: r.company_size,
     "Tasa cierre": r.close_rate,
     "Reuniones": r.total,
@@ -139,21 +131,19 @@ export default function MarketPage() {
           </CardContent>
         </Card>
 
-        {/* Conversión por tier de volumen */}
+        {/* Tasa de cierre por tier de volumen */}
         <Card>
           <CardHeader>
-            <CardTitle>Conversión por volumen de interacciones</CardTitle>
+            <CardTitle>Tasa de cierre por volumen de interacciones</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={volumeData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="tier" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Legend iconSize={10} formatter={(v) => <span style={{ fontSize: 12 }}>{v}</span>} />
-                <Bar dataKey="Reuniones" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Tasa cierre" fill="#22d3ee" radius={[4, 4, 0, 0]} />
+                <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
+                <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v, n) => [`${v}${n === "Tasa cierre" ? "%" : ""}`, n]} />
+                <Bar dataKey="Tasa cierre" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -217,21 +207,19 @@ export default function MarketPage() {
           </CardContent>
         </Card>
 
-        {/* Conversión por tamaño de empresa */}
+        {/* Tasa de cierre por tamaño de empresa */}
         <Card>
           <CardHeader>
-            <CardTitle>Conversión por tamaño de empresa</CardTitle>
+            <CardTitle>Tasa de cierre por tamaño de empresa</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={companySizeData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="company_size" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Legend iconSize={10} formatter={(v) => <span style={{ fontSize: 12 }}>{v}</span>} />
-                <Bar dataKey="Reuniones" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Tasa cierre" fill="#22d3ee" radius={[4, 4, 0, 0]} />
+                <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
+                <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v, n) => [`${v}${n === "Tasa cierre" ? "%" : ""}`, n]} />
+                <Bar dataKey="Tasa cierre" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
