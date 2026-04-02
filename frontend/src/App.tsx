@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { FiltersProvider } from "@/contexts/FiltersContext"
+import AppLayout from "@/components/layout/AppLayout"
 import OverviewPage from "@/pages/OverviewPage"
 import SalespersonPage from "@/pages/SalespersonPage"
 import MarketPage from "@/pages/MarketPage"
@@ -13,16 +15,20 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/overview" replace />} />
-          <Route path="/overview" element={<OverviewPage />} />
-          <Route path="/vendedores" element={<SalespersonPage />} />
-          <Route path="/mercado" element={<MarketPage />} />
-          <Route path="/clientes" element={<ClientsPage />} />
-          <Route path="/explorador" element={<ExplorerPage />} />
-        </Routes>
-      </BrowserRouter>
+      <FiltersProvider>
+        <BrowserRouter>
+          <AppLayout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/overview" replace />} />
+              <Route path="/overview" element={<OverviewPage />} />
+              <Route path="/vendedores" element={<SalespersonPage />} />
+              <Route path="/mercado" element={<MarketPage />} />
+              <Route path="/clientes" element={<ClientsPage />} />
+              <Route path="/explorador" element={<ExplorerPage />} />
+            </Routes>
+          </AppLayout>
+        </BrowserRouter>
+      </FiltersProvider>
     </QueryClientProvider>
   )
 }
