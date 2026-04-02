@@ -34,8 +34,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
       <div className="flex flex-1 items-center justify-end gap-3 flex-wrap">
         {/* Date range */}
         <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground whitespace-nowrap">Desde</label>
+          <label htmlFor="filter-date-from" className="text-xs text-muted-foreground whitespace-nowrap">Desde</label>
           <input
+            id="filter-date-from"
             type="date"
             className={inputClass}
             value={filters.dateFrom}
@@ -43,8 +44,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs text-muted-foreground whitespace-nowrap">Hasta</label>
+          <label htmlFor="filter-date-to" className="text-xs text-muted-foreground whitespace-nowrap">Hasta</label>
           <input
+            id="filter-date-to"
             type="date"
             className={inputClass}
             value={filters.dateTo}
