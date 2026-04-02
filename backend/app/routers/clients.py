@@ -57,12 +57,11 @@ async def list_clients(
     if meeting_depth:
         query = query.where(Client.meeting_depth == meeting_depth)
 
-    sort_col = SORTABLE_COLUMNS.get(sort_by or "nombre")
-    query = query.order_by(asc(sort_col) if sort_order == "asc" else desc(sort_col))
-
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))
     total = count_result.scalar()
 
+    sort_col = SORTABLE_COLUMNS.get(sort_by or "nombre")
+    query = query.order_by(asc(sort_col) if sort_order == "asc" else desc(sort_col))
     query = query.offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(query)
     items = result.scalars().all()
