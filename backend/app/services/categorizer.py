@@ -30,10 +30,16 @@ Transcripción:
 Responde solo con el JSON, sin markdown ni explicaciones."""
 
 
+_model = None
+
+
 def _get_model():
-    """Lazy initialization — avoids crash on startup if GEMINI_API_KEY is missing."""
-    genai.configure(api_key=settings.gemini_api_key)
-    return genai.GenerativeModel("gemini-1.5-flash")
+    """Lazy init + cached — avoids crash on startup and recreating the instance each call."""
+    global _model
+    if _model is None:
+        genai.configure(api_key=settings.gemini_api_key)
+        _model = genai.GenerativeModel("gemini-1.5-flash")
+    return _model
 
 
 def _parse_llm_json(text: str) -> dict:

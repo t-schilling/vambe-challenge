@@ -10,7 +10,6 @@ _state: dict = {"running": False, "last_result": None}
 
 
 async def _run_processing(force: bool) -> None:
-    _state["running"] = True
     try:
         async with AsyncSessionLocal() as db:
             result = await process_csv(db, settings.csv_path, force=force)
@@ -26,6 +25,7 @@ async def trigger_processing(
 ):
     if _state["running"]:
         return {"message": "Processing already running", "status": "running"}
+    _state["running"] = True  # set before enqueuing to avoid race condition
     background_tasks.add_task(_run_processing, force)
     return {"message": "Processing started in background", "status": "started"}
 
