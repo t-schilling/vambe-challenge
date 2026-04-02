@@ -3,9 +3,6 @@ import asyncio
 import google.generativeai as genai
 from app.config import settings
 
-genai.configure(api_key=settings.gemini_api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
-
 CATEGORY_SCHEMA = {
     "sector": "string — industria del cliente (ej: healthcare, retail, logistics, education, tech, finance, legal, hospitality, consulting, real_estate, ngo, creative, construction, agriculture, transport)",
     "interaction_volume_tier": "enum: small | medium | large | unknown  (small=<100/día, medium=100-300/día, large=>300/día)",
@@ -33,24 +30,35 @@ Transcripción:
 Responde solo con el JSON, sin markdown ni explicaciones."""
 
 
-async def categorize_transcript(transcript: str) -> dict:
-    schema_str = json.dumps(CATEGORY_SCHEMA, ensure_ascii=False, indent=2)
-    prompt = PROMPT_TEMPLATE.format(schema=schema_str, transcript=transcript)
+def _get_model():
+    """Lazy initialization — avoids crash on startup if GEMINI_API_KEY is missing."""
+    genai.configure(api_key=settings.gemini_api_key)
+    return genai.GenerativeModel("gemini-1.5-flash")
 
-    response = await asyncio.to_thread(model.generate_content, prompt)
-    text = response.text.strip()
 
-    # Strip markdown code blocks if present
+def _parse_llm_json(text: str) -> dict:
+    text = text.strip()
     if text.startswith("```"):
         text = text.split("```")[1]
         if text.startswith("json"):
             text = text[4:]
         text = text.strip()
-
     return json.loads(text)
 
 
+async def categorize_transcript(transcript: str) -> dict:
+    model = _get_model()
+    schema_str = json.dumps(CATEGORY_SCHEMA, ensure_ascii=False, indent=2)
+    prompt = PROMPT_TEMPLATE.format(schema=schema_str, transcript=transcript)
+    response = await asyncio.to_thread(model.generate_content, prompt)
+    try:
+        return _parse_llm_json(response.text)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise ValueError(f"Gemini returned invalid JSON: {e}\nRaw: {response.text[:200]}")
+
+
 async def generate_insights(metrics: dict) -> dict:
+    model = _get_model()
     prompt = f"""Eres un analista de negocio experto en ventas B2B y herramientas de automatización.
 Analiza las siguientes métricas de pipeline de ventas de Vambe y genera un análisis ejecutivo.
 
@@ -68,12 +76,7 @@ Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta:
 Cada array debe tener entre 3 y 5 items. Sé específico con los datos. Responde solo con el JSON."""
 
     response = await asyncio.to_thread(model.generate_content, prompt)
-    text = response.text.strip()
-
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
-
-    return json.loads(text)
+    try:
+        return _parse_llm_json(response.text)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise ValueError(f"Gemini returned invalid JSON for insights: {e}\nRaw: {response.text[:200]}")

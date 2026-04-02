@@ -1,17 +1,35 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import get_db
+from fastapi import APIRouter, BackgroundTasks, Query
+from app.database import AsyncSessionLocal
 from app.services.csv_processor import process_csv
-from app.schemas import ProcessResponse
 from app.config import settings
 
 router = APIRouter(prefix="/api", tags=["process"])
 
+# In-memory processing state (sufficient for single-instance deploy)
+_state: dict = {"running": False, "last_result": None}
 
-@router.post("/process", response_model=ProcessResponse)
+
+async def _run_processing(force: bool) -> None:
+    _state["running"] = True
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await process_csv(db, settings.csv_path, force=force)
+            _state["last_result"] = result
+    finally:
+        _state["running"] = False
+
+
+@router.post("/process")
 async def trigger_processing(
+    background_tasks: BackgroundTasks,
     force: bool = Query(False, description="Re-categorize already processed clients"),
-    db: AsyncSession = Depends(get_db),
 ):
-    result = await process_csv(db, settings.csv_path, force=force)
-    return ProcessResponse(**result)
+    if _state["running"]:
+        return {"message": "Processing already running", "status": "running"}
+    background_tasks.add_task(_run_processing, force)
+    return {"message": "Processing started in background", "status": "started"}
+
+
+@router.get("/process/status")
+async def processing_status():
+    return {"running": _state["running"], "last_result": _state["last_result"]}
