@@ -1,12 +1,23 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, asc, desc
 from typing import Optional
 from app.database import get_db
 from app.models import Client
 from app.schemas import ClientListResponse, ClientOut
 
 router = APIRouter(prefix="/api/clients", tags=["clients"])
+
+SORTABLE_COLUMNS = {
+    "nombre": Client.nombre,
+    "fecha_reunion": Client.fecha_reunion,
+    "vendedor": Client.vendedor,
+    "closed": Client.closed,
+    "sector": Client.sector,
+    "primary_use_case": Client.primary_use_case,
+    "client_sentiment": Client.client_sentiment,
+    "meeting_depth": Client.meeting_depth,
+}
 
 
 @router.get("", response_model=ClientListResponse)
@@ -21,6 +32,8 @@ async def list_clients(
     discovery_channel: Optional[str] = None,
     primary_use_case: Optional[str] = None,
     meeting_depth: Optional[str] = None,
+    sort_by: Optional[str] = Query(None),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(Client)
@@ -43,6 +56,9 @@ async def list_clients(
         query = query.where(Client.primary_use_case == primary_use_case)
     if meeting_depth:
         query = query.where(Client.meeting_depth == meeting_depth)
+
+    sort_col = SORTABLE_COLUMNS.get(sort_by or "nombre")
+    query = query.order_by(asc(sort_col) if sort_order == "asc" else desc(sort_col))
 
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))
     total = count_result.scalar()
