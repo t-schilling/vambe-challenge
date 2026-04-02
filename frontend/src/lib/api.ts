@@ -8,6 +8,9 @@ export const api = axios.create({ baseURL: BASE_URL })
 export const getClients = (params: Record<string, unknown>) =>
   api.get("/api/clients", { params }).then((r) => r.data)
 
+export const getAllClients = (params?: Record<string, string>) =>
+  api.get("/api/clients/all", { params }).then((r) => r.data)
+
 export const getFilterOptions = () =>
   api.get("/api/clients/filter-options").then((r) => r.data)
 
