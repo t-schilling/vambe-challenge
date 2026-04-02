@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case
 from collections import defaultdict
+from datetime import date as date_type
+from typing import Optional
 from app.database import get_db
 from app.models import Client
 from app.schemas import InsightRequest, InsightResponse
@@ -14,26 +16,49 @@ def close_rate(closed_count: int, total: int) -> float:
     return round(closed_count / total * 100, 1) if total > 0 else 0.0
 
 
+async def global_filters(
+    vendedor: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+) -> dict:
+    return {"vendedor": vendedor, "date_from": date_from, "date_to": date_to}
+
+
+def apply_filters(query, gf: dict):
+    if gf["vendedor"]:
+        query = query.where(Client.vendedor == gf["vendedor"])
+    if gf["date_from"]:
+        query = query.where(Client.fecha_reunion >= date_type.fromisoformat(gf["date_from"]))
+    if gf["date_to"]:
+        query = query.where(Client.fecha_reunion <= date_type.fromisoformat(gf["date_to"]))
+    return query
+
+
 @router.get("/overview")
-async def get_overview(db: AsyncSession = Depends(get_db)):
+async def get_overview(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    base = apply_filters(select(Client), gf)
     result = await db.execute(
         select(
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed_count"),
             func.avg(Client.transcript_word_count).label("avg_words"),
             func.avg(Client.interaction_volume_estimate).label("avg_volume"),
-        )
+        ).select_from(base.subquery())
     )
     row = result.one()
 
-    # Top vendedor by close rate (min 2 meetings)
-    vend_result = await db.execute(
+    vend_q = apply_filters(
         select(
             Client.vendedor,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).group_by(Client.vendedor)
+        ).where(Client.vendedor.isnot(None)).group_by(Client.vendedor),
+        gf,
     )
+    vend_result = await db.execute(vend_q)
     vendedores = vend_result.all()
     top_vendedor = max(
         [v for v in vendedores if v.total >= 2],
@@ -52,14 +77,19 @@ async def get_overview(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-sector")
-async def by_sector(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_sector(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.sector,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.sector.isnot(None)).group_by(Client.sector).order_by(func.count(Client.id).desc())
+        ).where(Client.sector.isnot(None)).group_by(Client.sector).order_by(func.count(Client.id).desc()),
+        gf,
     )
+    result = await db.execute(q)
     return [
         {"sector": r.sector, "total": r.total, "closed": int(r.closed or 0),
          "close_rate": close_rate(int(r.closed or 0), r.total)}
@@ -68,24 +98,29 @@ async def by_sector(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-salesperson")
-async def by_salesperson(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_salesperson(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.vendedor,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
             func.avg(Client.transcript_word_count).label("avg_words"),
-        ).where(Client.vendedor.isnot(None)).group_by(Client.vendedor).order_by(func.count(Client.id).desc())
+        ).where(Client.vendedor.isnot(None)).group_by(Client.vendedor).order_by(func.count(Client.id).desc()),
+        gf,
     )
-
+    result = await db.execute(q)
     rows = result.all()
 
-    # meeting_depth distribution per vendedor
-    depth_result = await db.execute(
+    depth_q = apply_filters(
         select(Client.vendedor, Client.meeting_depth, func.count(Client.id).label("count"))
         .where(Client.vendedor.isnot(None), Client.meeting_depth.isnot(None))
-        .group_by(Client.vendedor, Client.meeting_depth)
+        .group_by(Client.vendedor, Client.meeting_depth),
+        gf,
     )
+    depth_result = await db.execute(depth_q)
     depth_map = defaultdict(dict)
     for r in depth_result.all():
         depth_map[r.vendedor][r.meeting_depth] = r.count
@@ -104,14 +139,19 @@ async def by_salesperson(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-channel")
-async def by_channel(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_channel(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.discovery_channel,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.discovery_channel.isnot(None)).group_by(Client.discovery_channel).order_by(func.count(Client.id).desc())
+        ).where(Client.discovery_channel.isnot(None)).group_by(Client.discovery_channel).order_by(func.count(Client.id).desc()),
+        gf,
     )
+    result = await db.execute(q)
     return [
         {"channel": r.discovery_channel, "total": r.total, "closed": int(r.closed or 0),
          "close_rate": close_rate(int(r.closed or 0), r.total)}
@@ -120,14 +160,19 @@ async def by_channel(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-volume")
-async def by_volume(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_volume(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.interaction_volume_tier,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.interaction_volume_tier.isnot(None)).group_by(Client.interaction_volume_tier)
+        ).where(Client.interaction_volume_tier.isnot(None)).group_by(Client.interaction_volume_tier),
+        gf,
     )
+    result = await db.execute(q)
     order = {"small": 0, "medium": 1, "large": 2, "unknown": 3}
     rows = sorted(result.all(), key=lambda r: order.get(r.interaction_volume_tier, 99))
     return [
@@ -138,14 +183,19 @@ async def by_volume(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-use-case")
-async def by_use_case(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_use_case(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.primary_use_case,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.primary_use_case.isnot(None)).group_by(Client.primary_use_case).order_by(func.count(Client.id).desc())
+        ).where(Client.primary_use_case.isnot(None)).group_by(Client.primary_use_case).order_by(func.count(Client.id).desc()),
+        gf,
     )
+    result = await db.execute(q)
     return [
         {"use_case": r.primary_use_case, "total": r.total, "closed": int(r.closed or 0),
          "close_rate": close_rate(int(r.closed or 0), r.total)}
@@ -154,14 +204,19 @@ async def by_use_case(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-pain-point")
-async def by_pain_point(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_pain_point(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.main_pain_point,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.main_pain_point.isnot(None)).group_by(Client.main_pain_point).order_by(func.count(Client.id).desc())
+        ).where(Client.main_pain_point.isnot(None)).group_by(Client.main_pain_point).order_by(func.count(Client.id).desc()),
+        gf,
     )
+    result = await db.execute(q)
     return [
         {"pain_point": r.main_pain_point, "total": r.total, "closed": int(r.closed or 0),
          "close_rate": close_rate(int(r.closed or 0), r.total)}
@@ -170,15 +225,20 @@ async def by_pain_point(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/by-meeting-depth")
-async def by_meeting_depth(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def by_meeting_depth(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
         select(
             Client.meeting_depth,
             Client.client_engagement,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.meeting_depth.isnot(None)).group_by(Client.meeting_depth, Client.client_engagement)
+        ).where(Client.meeting_depth.isnot(None)).group_by(Client.meeting_depth, Client.client_engagement),
+        gf,
     )
+    result = await db.execute(q)
     return [
         {
             "meeting_depth": r.meeting_depth,
@@ -192,15 +252,20 @@ async def by_meeting_depth(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/timeline")
-async def timeline(db: AsyncSession = Depends(get_db)):
+async def timeline(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
     month_expr = func.to_char(Client.fecha_reunion, "YYYY-MM").label("month")
-    result = await db.execute(
+    q = apply_filters(
         select(
             month_expr,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.fecha_reunion.isnot(None)).group_by(month_expr).order_by(month_expr)
+        ).where(Client.fecha_reunion.isnot(None)).group_by(month_expr).order_by(month_expr),
+        gf,
     )
+    result = await db.execute(q)
     return [
         {"month": r.month, "total": r.total, "closed": int(r.closed or 0),
          "close_rate": close_rate(int(r.closed or 0), r.total)}

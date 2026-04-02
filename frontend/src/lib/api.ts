@@ -12,32 +12,32 @@ export const getFilterOptions = () =>
   api.get("/api/clients/filter-options").then((r) => r.data)
 
 // Analytics
-export const getOverview = () =>
-  api.get("/api/analytics/overview").then((r) => r.data)
+export const getOverview = (params?: Record<string, string>) =>
+  api.get("/api/analytics/overview", { params }).then((r) => r.data)
 
-export const getBySector = () =>
-  api.get("/api/analytics/by-sector").then((r) => r.data)
+export const getBySector = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-sector", { params }).then((r) => r.data)
 
-export const getBySalesperson = () =>
-  api.get("/api/analytics/by-salesperson").then((r) => r.data)
+export const getBySalesperson = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-salesperson", { params }).then((r) => r.data)
 
-export const getByChannel = () =>
-  api.get("/api/analytics/by-channel").then((r) => r.data)
+export const getByChannel = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-channel", { params }).then((r) => r.data)
 
-export const getByVolume = () =>
-  api.get("/api/analytics/by-volume").then((r) => r.data)
+export const getByVolume = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-volume", { params }).then((r) => r.data)
 
-export const getByUseCase = () =>
-  api.get("/api/analytics/by-use-case").then((r) => r.data)
+export const getByUseCase = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-use-case", { params }).then((r) => r.data)
 
-export const getByPainPoint = () =>
-  api.get("/api/analytics/by-pain-point").then((r) => r.data)
+export const getByPainPoint = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-pain-point", { params }).then((r) => r.data)
 
-export const getByMeetingDepth = () =>
-  api.get("/api/analytics/by-meeting-depth").then((r) => r.data)
+export const getByMeetingDepth = (params?: Record<string, string>) =>
+  api.get("/api/analytics/by-meeting-depth", { params }).then((r) => r.data)
 
-export const getTimeline = () =>
-  api.get("/api/analytics/timeline").then((r) => r.data)
+export const getTimeline = (params?: Record<string, string>) =>
+  api.get("/api/analytics/timeline", { params }).then((r) => r.data)
 
 // Insights
 export const generateInsights = (metrics: Record<string, unknown>) =>
