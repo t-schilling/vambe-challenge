@@ -237,7 +237,7 @@ async def by_meeting_depth(
             Client.client_engagement,
             func.count(Client.id).label("total"),
             func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
-        ).where(Client.meeting_depth.isnot(None)).group_by(Client.meeting_depth, Client.client_engagement),
+        ).where(Client.meeting_depth.isnot(None), Client.client_engagement.isnot(None)).group_by(Client.meeting_depth, Client.client_engagement),
         gf,
     )
     result = await db.execute(q)
