@@ -41,7 +41,7 @@ export const getTimeline = () =>
 
 // Insights
 export const generateInsights = (metrics: Record<string, unknown>) =>
-  api.post("/api/insights", { metrics }).then((r) => r.data)
+  api.post("/api/analytics/insights", { metrics }).then((r) => r.data)
 
 // Process
 export const triggerProcess = (force = false) =>
