@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, asc, desc
 from typing import Optional
+from datetime import date as date_type
 from app.database import get_db
 from app.models import Client
 from app.schemas import ClientListResponse, ClientOut
@@ -67,6 +68,25 @@ async def list_clients(
     items = result.scalars().all()
 
     return ClientListResponse(total=total, page=page, page_size=page_size, items=items)
+
+
+@router.get("/all", response_model=list[ClientOut])
+async def all_clients(
+    vendedor: Optional[str] = None,
+    date_from: Optional[date_type] = None,
+    date_to: Optional[date_type] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Returns all categorized clients for frontend-side aggregations (Explorador)."""
+    query = select(Client).where(Client.categorized == True)
+    if vendedor:
+        query = query.where(Client.vendedor == vendedor)
+    if date_from:
+        query = query.where(Client.fecha_reunion >= date_from)
+    if date_to:
+        query = query.where(Client.fecha_reunion <= date_to)
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 @router.get("/filter-options")
