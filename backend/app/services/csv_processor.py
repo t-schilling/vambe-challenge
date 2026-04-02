@@ -20,6 +20,10 @@ def parse_date(val) -> date | None:
         return None
 
 
+def is_valid_email(value: str) -> bool:
+    return bool(value) and value.lower() not in ("nan", "none", "") and "@" in value
+
+
 async def process_csv(db: AsyncSession, csv_path: str, force: bool = False) -> dict:
     df = pd.read_csv(csv_path)
     df.columns = df.columns.str.strip()
@@ -31,7 +35,10 @@ async def process_csv(db: AsyncSession, csv_path: str, force: bool = False) -> d
     for _, row in df.iterrows():
         correo = str(row.get("Correo Electronico", "")).strip()
 
-        # Check if already exists
+        if not is_valid_email(correo):
+            errors += 1
+            continue
+
         result = await db.execute(select(Client).where(Client.correo == correo))
         existing = result.scalar_one_or_none()
 
@@ -82,9 +89,14 @@ async def process_csv(db: AsyncSession, csv_path: str, force: bool = False) -> d
         else:
             db.add(Client(**client_data))
 
-        await db.commit()
-
         # Rate limiting: respect Gemini free tier
         await asyncio.sleep(0.5)
+
+    # Single batch commit at the end
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise RuntimeError(f"Failed to commit batch to DB: {e}")
 
     return {"processed": processed, "skipped": skipped, "errors": errors}

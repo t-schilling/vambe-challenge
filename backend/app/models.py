@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Date, JSON
+from sqlalchemy import Column, Integer, String, Boolean, Date, JSON
 from app.database import Base
 
 
@@ -23,7 +23,7 @@ class Client(Base):
     sector = Column(String)
     interaction_volume_tier = Column(String)  # small, medium, large, unknown
     interaction_volume_estimate = Column(Integer)
-    discovery_channel = Column(String)        # conference, google, linkedin, colleague, podcast, webinar, article, fair
+    discovery_channel = Column(String)        # conference, google, linkedin, colleague, podcast, webinar, article, fair, other
     primary_use_case = Column(String)         # customer_support, appointment_scheduling, order_tracking, faq_automation, lead_qualification
     main_pain_point = Column(String)          # high_volume, slow_response, team_overload, repetitive_queries, scaling
     integration_needs = Column(JSON)          # list of strings

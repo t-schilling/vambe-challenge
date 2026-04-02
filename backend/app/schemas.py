@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date
 
@@ -30,11 +30,10 @@ class ClientCategory(BaseModel):
 
 
 class ClientOut(ClientBase, ClientCategory):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     categorized: bool
-
-    class Config:
-        from_attributes = True
 
 
 class ClientListResponse(BaseModel):
