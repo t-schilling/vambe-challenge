@@ -39,14 +39,16 @@ async def get_overview(
     db: AsyncSession = Depends(get_db),
     gf: dict = Depends(global_filters),
 ):
-    base = apply_filters(select(Client), gf)
     result = await db.execute(
-        select(
-            func.count(Client.id).label("total"),
-            func.sum(case((Client.closed == True, 1), else_=0)).label("closed_count"),
-            func.avg(Client.transcript_word_count).label("avg_words"),
-            func.avg(Client.interaction_volume_estimate).label("avg_volume"),
-        ).select_from(base.subquery())
+        apply_filters(
+            select(
+                func.count(Client.id).label("total"),
+                func.sum(case((Client.closed == True, 1), else_=0)).label("closed_count"),
+                func.avg(Client.transcript_word_count).label("avg_words"),
+                func.avg(Client.interaction_volume_estimate).label("avg_volume"),
+            ),
+            gf,
+        )
     )
     row = result.one()
 
