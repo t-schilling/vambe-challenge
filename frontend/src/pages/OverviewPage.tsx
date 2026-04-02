@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   AreaChart,
@@ -39,18 +39,25 @@ export default function OverviewPage() {
   const [insightsOpen, setInsightsOpen] = useState(false)
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [insights, setInsights] = useState<InsightData | null>(null)
+  const [insightsError, setInsightsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setInsights(null)
+    setInsightsOpen(false)
+    setInsightsError(null)
+  }, [apiParams])
 
   const { data: overview, isLoading: loadingOverview } = useQuery({
     queryKey: ["overview", apiParams],
     queryFn: () => getOverview(apiParams),
   })
 
-  const { data: sectors } = useQuery({
+  const { data: sectors, isLoading: loadingSectors } = useQuery({
     queryKey: ["by-sector", apiParams],
     queryFn: () => getBySector(apiParams),
   })
 
-  const { data: channels } = useQuery({
+  const { data: channels, isLoading: loadingChannels } = useQuery({
     queryKey: ["by-channel", apiParams],
     queryFn: () => getByChannel(apiParams),
   })
@@ -67,6 +74,7 @@ export default function OverviewPage() {
     }
     setInsightsLoading(true)
     setInsightsOpen(true)
+    setInsightsError(null)
     try {
       const result = await generateInsights({
         overview,
@@ -74,6 +82,9 @@ export default function OverviewPage() {
         top_channels: channels?.slice(0, 5),
       })
       setInsights(result)
+    } catch {
+      setInsightsError("No se pudo generar el análisis. Intenta nuevamente.")
+      setInsightsOpen(false)
     } finally {
       setInsightsLoading(false)
     }
@@ -214,7 +225,7 @@ export default function OverviewPage() {
               variant="outline"
               size="sm"
               onClick={handleGenerateInsights}
-              disabled={insightsLoading}
+              disabled={insightsLoading || loadingSectors || loadingChannels}
             >
               {insightsLoading ? (
                 <Loader2 className="mr-2 size-3.5 animate-spin" />
@@ -232,6 +243,12 @@ export default function OverviewPage() {
             </Button>
           </div>
         </CardHeader>
+
+        {insightsError && (
+          <CardContent>
+            <p className="text-sm text-rose-600">{insightsError}</p>
+          </CardContent>
+        )}
 
         {insightsOpen && (
           <CardContent>
