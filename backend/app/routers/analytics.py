@@ -316,6 +316,10 @@ async def by_integration_needs(
         params["date_to"] = gf["date_to"]
 
     where = " AND ".join(conditions)
+    # Raw SQL is required here: json_array_elements_text (PostgreSQL lateral join)
+    # has no direct SQLAlchemy ORM equivalent for unnesting JSON arrays.
+    # User-supplied values are passed via named params (:vendedor, :date_from, :date_to)
+    # — no SQL injection risk.
     result = await db.execute(
         text(f"""
             SELECT value AS need, COUNT(*) AS total
