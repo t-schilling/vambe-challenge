@@ -18,8 +18,8 @@ def close_rate(closed_count: int, total: int) -> float:
 
 async def global_filters(
     vendedor: Optional[str] = Query(None),
-    date_from: Optional[str] = Query(None),
-    date_to: Optional[str] = Query(None),
+    date_from: Optional[date_type] = Query(None),
+    date_to: Optional[date_type] = Query(None),
 ) -> dict:
     return {"vendedor": vendedor, "date_from": date_from, "date_to": date_to}
 
@@ -28,9 +28,9 @@ def apply_filters(query, gf: dict):
     if gf["vendedor"]:
         query = query.where(Client.vendedor == gf["vendedor"])
     if gf["date_from"]:
-        query = query.where(Client.fecha_reunion >= date_type.fromisoformat(gf["date_from"]))
+        query = query.where(Client.fecha_reunion >= gf["date_from"])
     if gf["date_to"]:
-        query = query.where(Client.fecha_reunion <= date_type.fromisoformat(gf["date_to"]))
+        query = query.where(Client.fecha_reunion <= gf["date_to"])
     return query
 
 

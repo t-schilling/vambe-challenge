@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useMemo, useState } from "react"
 
 interface Filters {
   vendedor: string
@@ -23,10 +23,13 @@ const FiltersContext = createContext<FiltersContextType>({
 export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<Filters>(defaultFilters)
 
-  const apiParams: Record<string, string> = {}
-  if (filters.vendedor) apiParams.vendedor = filters.vendedor
-  if (filters.dateFrom) apiParams.date_from = filters.dateFrom
-  if (filters.dateTo) apiParams.date_to = filters.dateTo
+  const apiParams = useMemo(() => {
+    const p: Record<string, string> = {}
+    if (filters.vendedor) p.vendedor = filters.vendedor
+    if (filters.dateFrom) p.date_from = filters.dateFrom
+    if (filters.dateTo) p.date_to = filters.dateTo
+    return p
+  }, [filters])
 
   return (
     <FiltersContext.Provider value={{ filters, setFilters, apiParams }}>
