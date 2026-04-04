@@ -2,6 +2,7 @@ import { Menu } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getFilterOptions } from "@/lib/api"
 import { useFilters } from "@/contexts/FiltersContext"
+import ExportButton from "./ExportButton"
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -77,6 +78,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
             Limpiar
           </button>
         )}
+
+        <ExportButton />
       </div>
     </header>
   )
