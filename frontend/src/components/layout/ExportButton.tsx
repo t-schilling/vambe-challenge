@@ -49,12 +49,15 @@ export default function ExportButton() {
         interaction_volume_tier: c.interaction_volume_tier,
         interaction_volume_estimate: c.interaction_volume_estimate,
         discovery_channel: c.discovery_channel,
-        integration_needs: Array.isArray(c.integration_needs) ? c.integration_needs.join("|") : "",
+        integration_needs: c.integration_needs, // array — exportToCSV joins with "|"
         meeting_depth: c.meeting_depth,
         client_engagement: c.client_engagement,
         transcript_word_count: c.transcript_word_count,
+        // transcripcion omitida intencionalmente: texto largo que dificulta el uso en Excel
       }))
       exportToCSV(rows, `vambe-clientes-${todayISO()}.csv`)
+    } catch {
+      alert("Error al exportar clientes. Por favor intenta de nuevo.")
     } finally {
       setLoading(null)
     }
@@ -83,6 +86,8 @@ export default function ExportButton() {
       ]
 
       exportToCSV(rows, `vambe-metricas-${todayISO()}.csv`)
+    } catch {
+      alert("Error al exportar métricas. Por favor intenta de nuevo.")
     } finally {
       setLoading(null)
     }
