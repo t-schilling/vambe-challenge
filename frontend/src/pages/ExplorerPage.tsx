@@ -77,10 +77,14 @@ function computeMetric(clients: Client[], metric: string): number {
   }
 }
 
+function getDimValue(c: Client, dim: string): string {
+  return ((c as unknown as Record<string, unknown>)[dim] as string) ?? "N/A"
+}
+
 function groupClients(clients: Client[], dimension: string): { name: string; clients: Client[] }[] {
   const map = new Map<string, Client[]>()
   for (const c of clients) {
-    const key = (c as unknown as Record<string, unknown>)[dimension] as string ?? "N/A"
+    const key = getDimValue(c, dimension)
     if (!map.has(key)) map.set(key, [])
     map.get(key)!.push(c)
   }
@@ -119,6 +123,12 @@ export default function ExplorerPage() {
     }))
   }, [allClients, dimension, metric])
 
+  // Unique values for the split-by dimension — used by both lineData pivot and Line renders
+  const splitByValues = useMemo(() => {
+    if (!splitBy) return []
+    return [...new Set(allClients.map((c) => getDimValue(c, splitBy)))]
+  }, [allClients, splitBy])
+
   // Line data: group by month, optionally split by dimension
   const lineData = useMemo(() => {
     const monthMap = new Map<string, Client[]>()
@@ -137,50 +147,61 @@ export default function ExplorerPage() {
       }))
     }
 
-    // Pivot: one column per dimension value
-    const dimValues = [...new Set(allClients.map((c) => (c as unknown as Record<string, unknown>)[splitBy] as string ?? "N/A"))]
+    // Pivot: one column per split-by value (reuse splitByValues)
     return months.map((month) => {
       const row: Record<string, unknown> = { month }
       const monthClients = monthMap.get(month)!
-      for (const dv of dimValues) {
-        const subset = monthClients.filter((c) => ((c as unknown as Record<string, unknown>)[splitBy] ?? "N/A") === dv)
+      for (const dv of splitByValues) {
+        const subset = monthClients.filter((c) => getDimValue(c, splitBy) === dv)
         row[dv] = computeMetric(subset, metric)
       }
       return row
     })
-  }, [allClients, metric, splitBy])
+  }, [allClients, metric, splitBy, splitByValues])
 
-  const splitByValues = useMemo(() => {
-    if (!splitBy) return []
-    return [...new Set(allClients.map((c) => (c as unknown as Record<string, unknown>)[splitBy] as string ?? "N/A"))]
-  }, [allClients, splitBy])
+  type ScatterPoint = { name: string; x: number; y: number; colorGroup?: string }
+  type ScatterGroup = { color: string; label: string; data: ScatterPoint[] }
 
-  // Scatter data: group by dimension, compute x/y metrics per group
-  const scatterData = useMemo(() => {
-    const groups = groupClients(allClients, dimension)
-    return groups.map(({ name, clients }) => ({
-      name,
-      x: computeMetric(clients, scatterX),
-      y: computeMetric(clients, scatterY),
-      color: colorBy ? ((clients[0] as unknown as Record<string, unknown>)[colorBy] as string ?? "N/A") : undefined,
-    }))
-  }, [allClients, dimension, scatterX, scatterY, colorBy])
-
-  type ScatterGroup = { color: string; label: string; data: typeof scatterData }
+  // Scatter data: when colorBy is set, cross-group by (dimension × colorBy) so each point
+  // represents a real (dim, colorBy) pair — not an arbitrary clients[0] lookup.
   const scatterGroups = useMemo((): ScatterGroup[] => {
-    if (!colorBy) return [{ color: COLORS[0], label: "", data: scatterData }]
-    const map = new Map<string, typeof scatterData>()
-    for (const p of scatterData) {
-      const key = p.color ?? "N/A"
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(p)
+    if (!colorBy) {
+      const data = groupClients(allClients, dimension).map(({ name, clients }) => ({
+        name,
+        x: computeMetric(clients, scatterX),
+        y: computeMetric(clients, scatterY),
+      }))
+      return [{ color: COLORS[0], label: "", data }]
     }
-    return Array.from(map.entries()).map(([key, data], i) => ({
+
+    // Cross-group: one point per (dimension × colorBy) pair
+    const crossMap = new Map<string, { dimVal: string; colorVal: string; clients: Client[] }>()
+    for (const c of allClients) {
+      const dimVal = getDimValue(c, dimension)
+      const colorVal = getDimValue(c, colorBy)
+      const key = `${dimVal}||${colorVal}`
+      if (!crossMap.has(key)) crossMap.set(key, { dimVal, colorVal, clients: [] })
+      crossMap.get(key)!.clients.push(c)
+    }
+
+    // Group points by colorBy value for separate Scatter components
+    const byColor = new Map<string, ScatterPoint[]>()
+    for (const { dimVal, colorVal, clients } of crossMap.values()) {
+      if (!byColor.has(colorVal)) byColor.set(colorVal, [])
+      byColor.get(colorVal)!.push({
+        name: `${dimVal} / ${colorVal}`,
+        x: computeMetric(clients, scatterX),
+        y: computeMetric(clients, scatterY),
+        colorGroup: colorVal,
+      })
+    }
+
+    return Array.from(byColor.entries()).map(([label, data], i) => ({
       color: COLORS[i % COLORS.length],
-      label: key,
+      label,
       data,
     }))
-  }, [scatterData, colorBy])
+  }, [allClients, dimension, colorBy, scatterX, scatterY])
 
   return (
     <div className="space-y-6">
@@ -332,7 +353,7 @@ export default function ExplorerPage() {
                         ))}
                       </>
                     ) : (
-                      <Scatter data={scatterData} fill="#6366f1" />
+                      <Scatter data={scatterGroups[0].data} fill="#6366f1" />
                     )}
                   </ScatterChart>
                 </ResponsiveContainer>
