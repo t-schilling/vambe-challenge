@@ -132,7 +132,8 @@ export default function OverviewPage() {
             <CardTitle>Tasa de cierre por mes</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
+            <div className="h-[180px] lg:h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timeline ?? []} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCloseRate" x1="0" y1="0" x2="0" y2="1">
@@ -156,6 +157,7 @@ export default function OverviewPage() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -165,7 +167,8 @@ export default function OverviewPage() {
             <CardTitle>Distribución por sector</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
+            <div className="h-[180px] lg:h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={sectors ?? []}
@@ -192,6 +195,7 @@ export default function OverviewPage() {
                 />
               </PieChart>
             </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -202,7 +206,8 @@ export default function OverviewPage() {
           <CardTitle>Conversión por canal de descubrimiento</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={240}>
+          <div className="h-[180px] lg:h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={channels ?? []} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="channel" tick={{ fontSize: 12 }} />
@@ -213,6 +218,7 @@ export default function OverviewPage() {
               <Bar dataKey="closed" name="Cerrados" fill="#22d3ee" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
