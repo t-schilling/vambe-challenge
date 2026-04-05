@@ -26,9 +26,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
     <div className="flex h-full w-60 flex-col bg-slate-900 text-slate-100">
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-5">
-        <span className="text-lg font-bold tracking-tight text-white">
-          Vambe Analytics
-        </span>
+        <img src="/vambe-logo.png" alt="Vambe" className="h-8 brightness-0 invert" />
         <button
           onClick={onClose}
           className="rounded p-1 text-slate-400 hover:text-white lg:hidden"
