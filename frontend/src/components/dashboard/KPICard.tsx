@@ -13,7 +13,7 @@ export default function KPICard({ title, value, subtitle }: KPICardProps) {
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-3xl font-bold tracking-tight">{value}</p>
+        <p className="text-2xl font-bold tracking-tight lg:text-3xl">{value}</p>
         {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
       </CardContent>
     </Card>
