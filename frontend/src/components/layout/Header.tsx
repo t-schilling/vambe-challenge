@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Menu, SlidersHorizontal, X } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getFilterOptions } from "@/lib/api"
@@ -21,6 +21,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const vendedores: string[] = filterOptions?.vendedor ?? []
 
   const activeCount = [filters.vendedor, filters.dateFrom, filters.dateTo].filter(Boolean).length
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
+  }, [drawerOpen])
 
   const inputClass =
     "h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
@@ -158,7 +163,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             onClick={() => setDrawerOpen(false)}
           />
           {/* Bottom sheet */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background p-6 shadow-xl lg:hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-background p-6 shadow-xl lg:hidden">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-base font-semibold">Filtros</span>
               <button
