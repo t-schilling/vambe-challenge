@@ -26,9 +26,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
     <div className="flex h-full w-60 flex-col bg-slate-900 text-slate-100">
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-5">
-        <div className="rounded-lg bg-white px-3 py-1.5">
-          <img src="/vambe-logo.png" alt="Vambe" className="h-7 w-auto" />
-        </div>
+        <img src="/vambe-logo.png" alt="Vambe" className="h-12 w-auto rounded-lg" />
         <button
           onClick={onClose}
           className="rounded p-1 text-slate-400 hover:text-white lg:hidden"
