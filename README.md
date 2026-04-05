@@ -2,7 +2,7 @@
 
 Dashboard analítico sobre reuniones de ventas de Vambe. Procesa ~60 transcripciones usando Google Gemini para extraer 13 dimensiones por cliente, y las expone en 5 vistas interactivas con filtros globales y exportación CSV.
 
-**Demo:** frontend en Vercel · backend en Railway
+**Demo:** [vambe-challenge.vercel.app](https://vambe-challenge.vercel.app) · API: [vambe-challenge-production.up.railway.app](https://vambe-challenge-production.up.railway.app)
 
 ---
 
