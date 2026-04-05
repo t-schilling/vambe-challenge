@@ -26,3 +26,6 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Local assets (copied to frontend/public/ as needed)
+logos/
