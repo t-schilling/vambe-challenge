@@ -25,11 +25,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
   return (
     <div className="flex h-full w-60 flex-col bg-slate-900 text-slate-100">
       {/* Logo */}
-      <div className="flex items-center justify-between px-5 py-5">
-        <img src="/vambe-logo.png" alt="Vambe" className="h-12 w-auto rounded-lg" />
+      <div className="relative px-4 py-4">
+        <img src="/vambe-logo.png" alt="Vambe" className="w-full rounded-lg" />
         <button
           onClick={onClose}
-          className="rounded p-1 text-slate-400 hover:text-white lg:hidden"
+          className="absolute right-2 top-2 rounded p-1 text-slate-400 hover:text-white lg:hidden"
           aria-label="Cerrar menú"
         >
           <X className="size-5" />
