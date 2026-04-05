@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { ChevronUp, ChevronDown, ChevronsUpDown, Loader2, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronUp, ChevronDown, ChevronsUpDown, Loader2, Search, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { useFilters } from "@/contexts/FiltersContext"
 import { getClients, getFilterOptions } from "@/lib/api"
 import { Card, CardContent } from "@/components/ui/card"
@@ -80,6 +80,7 @@ export default function ClientsPage() {
   const [sortBy, setSortBy] = useState<SortField>("nombre")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [selected, setSelected] = useState<Client | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const [filters, setFilters] = useState<Record<string, string>>({
     sector: "", vendedor: "", closed: "", client_sentiment: "",
@@ -114,6 +115,8 @@ export default function ClientsPage() {
   const total: number = data?.total ?? 0
   const totalPages = Math.ceil(total / 15)
 
+  const activeFilterCount = Object.values(filters).filter(Boolean).length
+
   function handleSort(col: SortField) {
     if (sortBy === col) {
       setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
@@ -134,6 +137,46 @@ export default function ClientsPage() {
     setPage(1)
   }
 
+  function handleReset() {
+    setSearch(""); setSearchInput("")
+    setFilters({ sector: "", vendedor: "", closed: "", client_sentiment: "", discovery_channel: "", primary_use_case: "", meeting_depth: "" })
+    setPage(1)
+  }
+
+  const filterSelects = (
+    <>
+      {([
+        ["vendedor", "Vendedor"],
+        ["sector", "Sector"],
+        ["client_sentiment", "Sentiment"],
+        ["primary_use_case", "Use Case"],
+        ["meeting_depth", "Depth"],
+        ["discovery_channel", "Canal"],
+      ] as [string, string][]).map(([key, label]) => (
+        <select
+          key={key}
+          className={inputClass + " pr-6"}
+          value={filters[key]}
+          onChange={(e) => handleFilter(key, e.target.value)}
+        >
+          <option value="">{label}</option>
+          {(filterOptions?.[key] ?? []).map((v: string) => (
+            <option key={v} value={v}>{v}</option>
+          ))}
+        </select>
+      ))}
+      <select
+        className={inputClass + " pr-6"}
+        value={filters.closed}
+        onChange={(e) => handleFilter("closed", e.target.value)}
+      >
+        <option value="">Estado</option>
+        <option value="true">Cerrado</option>
+        <option value="false">Abierto</option>
+      </select>
+    </>
+  )
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Clientes</h1>
@@ -141,11 +184,11 @@ export default function ClientsPage() {
       {/* Search + filters */}
       <Card>
         <CardContent className="pt-4">
-          <div className="flex flex-wrap gap-3">
-            {/* Search */}
-            <div className="flex gap-1.5">
+          {/* Search row — always visible */}
+          <div className="flex gap-2">
+            <div className="flex flex-1 gap-1.5">
               <input
-                className={inputClass + " w-52"}
+                className={inputClass + " flex-1"}
                 placeholder="Buscar nombre o email…"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -159,48 +202,38 @@ export default function ClientsPage() {
               </button>
             </div>
 
-            {/* Filter selects */}
-            {([
-              ["vendedor", "Vendedor"],
-              ["sector", "Sector"],
-              ["client_sentiment", "Sentiment"],
-              ["primary_use_case", "Use Case"],
-              ["meeting_depth", "Depth"],
-              ["discovery_channel", "Canal"],
-            ] as [string, string][]).map(([key, label]) => (
-              <select
-                key={key}
-                className={inputClass + " pr-6"}
-                value={filters[key]}
-                onChange={(e) => handleFilter(key, e.target.value)}
-              >
-                <option value="">{label}</option>
-                {(filterOptions?.[key] ?? []).map((v: string) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
-            ))}
-
-            <select
-              className={inputClass + " pr-6"}
-              value={filters.closed}
-              onChange={(e) => handleFilter("closed", e.target.value)}
+            {/* Mobile: toggle filters */}
+            <button
+              onClick={() => setFiltersOpen((o) => !o)}
+              className="relative flex h-8 items-center gap-1.5 rounded-md border border-input px-2.5 text-sm hover:bg-accent md:hidden"
             >
-              <option value="">Estado</option>
-              <option value="true">Cerrado</option>
-              <option value="false">Abierto</option>
-            </select>
+              <SlidersHorizontal className="size-3.5" />
+              Filtros
+              {activeFilterCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
 
-            {/* Reset */}
-            {(search || Object.values(filters).some(Boolean)) && (
-              <button
-                onClick={() => {
-                  setSearch(""); setSearchInput("")
-                  setFilters({ sector: "", vendedor: "", closed: "", client_sentiment: "", discovery_channel: "", primary_use_case: "", meeting_depth: "" })
-                  setPage(1)
-                }}
-                className="text-xs text-muted-foreground underline hover:text-foreground"
-              >
+          {/* Mobile: collapsible filters */}
+          {filtersOpen && (
+            <div className="mt-3 flex flex-col gap-2 md:hidden">
+              {filterSelects}
+              {(search || activeFilterCount > 0) && (
+                <button onClick={handleReset} className="text-xs text-muted-foreground underline hover:text-foreground text-left">
+                  Limpiar
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Desktop: inline filters */}
+          <div className="mt-3 hidden flex-wrap gap-3 md:flex">
+            {filterSelects}
+            {(search || activeFilterCount > 0) && (
+              <button onClick={handleReset} className="text-xs text-muted-foreground underline hover:text-foreground">
                 Limpiar
               </button>
             )}
@@ -208,7 +241,7 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* Table / Card view */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -216,66 +249,96 @@ export default function ClientsPage() {
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    {COLUMNS.map(({ key, label }) => (
-                      <th
-                        key={label}
-                        className={`px-4 py-3 font-medium ${key ? "cursor-pointer select-none hover:text-foreground" : ""}`}
-                        onClick={() => key && handleSort(key)}
+            <>
+              {/* Mobile: card view */}
+              <div className="divide-y md:hidden">
+                {clients.map((c) => (
+                  <div
+                    key={c.id}
+                    className="cursor-pointer px-4 py-3 hover:bg-muted/50 transition-colors"
+                    onClick={() => setSelected(c)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{c.nombre}</p>
+                        <p className="text-sm text-muted-foreground truncate">{c.vendedor ?? "—"}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${c.closed ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
+                        {c.closed ? "Cerrado" : "Abierto"}
+                      </span>
+                    </div>
+                    {c.sector && (
+                      <p className="mt-1 text-xs text-muted-foreground">{c.sector}</p>
+                    )}
+                  </div>
+                ))}
+                {clients.length === 0 && (
+                  <p className="px-4 py-8 text-center text-sm text-muted-foreground">Sin resultados</p>
+                )}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      {COLUMNS.map(({ key, label }) => (
+                        <th
+                          key={label}
+                          className={`px-4 py-3 font-medium ${key ? "cursor-pointer select-none hover:text-foreground" : ""}`}
+                          onClick={() => key && handleSort(key)}
+                        >
+                          {label}
+                          <SortIcon col={key} sortBy={sortBy} sortOrder={sortOrder} />
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.map((c) => (
+                      <tr
+                        key={c.id}
+                        className="cursor-pointer border-b last:border-0 hover:bg-muted/50 transition-colors"
+                        onClick={() => setSelected(c)}
                       >
-                        {label}
-                        <SortIcon col={key} sortBy={sortBy} sortOrder={sortOrder} />
-                      </th>
+                        <td className="px-4 py-3 font-medium">{c.nombre}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{c.correo}</td>
+                        <td className="px-4 py-3">{c.vendedor ?? "—"}</td>
+                        <td className="px-4 py-3">{c.fecha_reunion ?? "—"}</td>
+                        <td className="px-4 py-3">{c.sector ?? "—"}</td>
+                        <td className="px-4 py-3">{c.primary_use_case ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          {c.client_sentiment ? (
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SENTIMENT_COLORS[c.client_sentiment] ?? "bg-slate-100 text-slate-700"}`}>
+                              {c.client_sentiment}
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {c.meeting_depth ? (
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${DEPTH_COLORS[c.meeting_depth] ?? "bg-slate-100 text-slate-700"}`}>
+                              {c.meeting_depth}
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.closed ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
+                            {c.closed ? "Cerrado" : "Abierto"}
+                          </span>
+                        </td>
+                      </tr>
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {clients.map((c) => (
-                    <tr
-                      key={c.id}
-                      className="cursor-pointer border-b last:border-0 hover:bg-muted/50 transition-colors"
-                      onClick={() => setSelected(c)}
-                    >
-                      <td className="px-4 py-3 font-medium">{c.nombre}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.correo}</td>
-                      <td className="px-4 py-3">{c.vendedor ?? "—"}</td>
-                      <td className="px-4 py-3">{c.fecha_reunion ?? "—"}</td>
-                      <td className="px-4 py-3">{c.sector ?? "—"}</td>
-                      <td className="px-4 py-3">{c.primary_use_case ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        {c.client_sentiment ? (
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SENTIMENT_COLORS[c.client_sentiment] ?? "bg-slate-100 text-slate-700"}`}>
-                            {c.client_sentiment}
-                          </span>
-                        ) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {c.meeting_depth ? (
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${DEPTH_COLORS[c.meeting_depth] ?? "bg-slate-100 text-slate-700"}`}>
-                            {c.meeting_depth}
-                          </span>
-                        ) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.closed ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
-                          {c.closed ? "Cerrado" : "Abierto"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {clients.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
-                        Sin resultados
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    {clients.length === 0 && (
+                      <tr>
+                        <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                          Sin resultados
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -288,14 +351,14 @@ export default function ClientsPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-accent disabled:opacity-40"
+              className="flex h-10 w-10 items-center justify-center rounded-md border hover:bg-accent disabled:opacity-40"
             >
               <ChevronLeft className="size-4" />
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-accent disabled:opacity-40"
+              className="flex h-10 w-10 items-center justify-center rounded-md border hover:bg-accent disabled:opacity-40"
             >
               <ChevronRight className="size-4" />
             </button>
@@ -313,7 +376,7 @@ export default function ClientsPage() {
                 <p className="text-sm text-muted-foreground">{selected.correo}</p>
               </DialogHeader>
 
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm md:grid-cols-2">
                 <Detail label="Vendedor" value={selected.vendedor} />
                 <Detail label="Fecha reunión" value={selected.fecha_reunion} />
                 <Detail label="Sector" value={selected.sector} />
