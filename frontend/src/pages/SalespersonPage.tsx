@@ -96,7 +96,38 @@ export default function SalespersonPage() {
           <CardTitle>Tabla comparativa</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Mobile: card view */}
+          <div className="divide-y md:hidden">
+            {rows.map((r) => {
+              const pctDeep = r.total > 0
+                ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100)
+                : 0
+              return (
+                <div key={r.vendedor} className="py-3">
+                  <p className="font-medium">{r.vendedor}</p>
+                  <div className="mt-1.5 grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Reuniones</p>
+                      <p className="font-medium">{r.total}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tasa cierre</p>
+                      <p className={`font-medium ${r.close_rate >= 50 ? "text-emerald-600" : r.close_rate >= 30 ? "text-amber-600" : "text-rose-600"}`}>
+                        {r.close_rate}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">% Deep</p>
+                      <p className="font-medium">{pctDeep}%</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
@@ -114,26 +145,18 @@ export default function SalespersonPage() {
                     ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100)
                     : 0
                   return (
-                  <tr key={r.vendedor} className="border-b last:border-0">
-                    <td className="py-2.5 pr-4 font-medium">{r.vendedor}</td>
-                    <td className="py-2.5 pr-4 text-right">{r.total}</td>
-                    <td className="py-2.5 pr-4 text-right">{r.closed}</td>
-                    <td className="py-2.5 pr-4 text-right">
-                      <span
-                        className={
-                          r.close_rate >= 50
-                            ? "text-emerald-600 font-medium"
-                            : r.close_rate >= 30
-                            ? "text-amber-600"
-                            : "text-rose-600"
-                        }
-                      >
-                        {r.close_rate}%
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
-                    <td className="py-2.5 pr-4 text-right">{pctDeep}%</td>
-                  </tr>
+                    <tr key={r.vendedor} className="border-b last:border-0">
+                      <td className="py-2.5 pr-4 font-medium">{r.vendedor}</td>
+                      <td className="py-2.5 pr-4 text-right">{r.total}</td>
+                      <td className="py-2.5 pr-4 text-right">{r.closed}</td>
+                      <td className="py-2.5 pr-4 text-right">
+                        <span className={r.close_rate >= 50 ? "text-emerald-600 font-medium" : r.close_rate >= 30 ? "text-amber-600" : "text-rose-600"}>
+                          {r.close_rate}%
+                        </span>
+                      </td>
+                      <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
+                      <td className="py-2.5 pr-4 text-right">{pctDeep}%</td>
+                    </tr>
                   )
                 })}
               </tbody>
@@ -150,7 +173,7 @@ export default function SalespersonPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={avgWordsData} layout="vertical" margin={{ top: 4, right: 16, left: 60, bottom: 0 }}>
+              <BarChart data={avgWordsData} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="vendedor" tick={{ fontSize: 12 }} width={56} />
@@ -168,7 +191,7 @@ export default function SalespersonPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={depthData} layout="vertical" margin={{ top: 4, right: 16, left: 60, bottom: 0 }}>
+              <BarChart data={depthData} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="vendedor" tick={{ fontSize: 12 }} width={56} />
