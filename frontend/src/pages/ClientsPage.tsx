@@ -115,7 +115,7 @@ export default function ClientsPage() {
   const total: number = data?.total ?? 0
   const totalPages = Math.ceil(total / 15)
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length
+  const activeFilterCount = Object.values(filters).filter(Boolean).length + (search ? 1 : 0)
 
   function handleSort(col: SortField) {
     if (sortBy === col) {
@@ -205,7 +205,7 @@ export default function ClientsPage() {
             {/* Mobile: toggle filters */}
             <button
               onClick={() => setFiltersOpen((o) => !o)}
-              className="relative flex h-8 items-center gap-1.5 rounded-md border border-input px-2.5 text-sm hover:bg-accent md:hidden"
+              className="relative flex h-8 items-center gap-1.5 rounded-md border border-input px-2.5 text-sm hover:bg-accent lg:hidden"
             >
               <SlidersHorizontal className="size-3.5" />
               Filtros
@@ -219,7 +219,7 @@ export default function ClientsPage() {
 
           {/* Mobile: collapsible filters */}
           {filtersOpen && (
-            <div className="mt-3 flex flex-col gap-2 md:hidden">
+            <div className="mt-3 flex flex-col gap-2 lg:hidden">
               {filterSelects}
               {(search || activeFilterCount > 0) && (
                 <button onClick={handleReset} className="text-xs text-muted-foreground underline hover:text-foreground text-left">
@@ -230,7 +230,7 @@ export default function ClientsPage() {
           )}
 
           {/* Desktop: inline filters */}
-          <div className="mt-3 hidden flex-wrap gap-3 md:flex">
+          <div className="mt-3 hidden flex-wrap gap-3 lg:flex">
             {filterSelects}
             {(search || activeFilterCount > 0) && (
               <button onClick={handleReset} className="text-xs text-muted-foreground underline hover:text-foreground">
@@ -251,7 +251,7 @@ export default function ClientsPage() {
           ) : (
             <>
               {/* Mobile: card view */}
-              <div className="divide-y md:hidden">
+              <div className="divide-y lg:hidden">
                 {clients.map((c) => (
                   <div
                     key={c.id}
@@ -278,7 +278,7 @@ export default function ClientsPage() {
               </div>
 
               {/* Desktop: table */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left text-muted-foreground">
