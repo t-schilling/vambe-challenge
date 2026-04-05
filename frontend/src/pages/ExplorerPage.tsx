@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, ScatterChart, Scatter, ZAxis, Legend,
 } from "recharts"
-import { Loader2 } from "lucide-react"
+import { Loader2, Settings2 } from "lucide-react"
 import { useFilters } from "@/contexts/FiltersContext"
 import { getAllClients } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -103,6 +103,7 @@ export default function ExplorerPage() {
   const [scatterY, setScatterY] = useState("close_rate")
   const [colorBy, setColorBy] = useState("")
   const [splitBy, setSplitBy] = useState("")
+  const [controlsOpen, setControlsOpen] = useState(false)
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ["all-clients", apiParams],
@@ -210,7 +211,17 @@ export default function ExplorerPage() {
       {/* Controls */}
       <Card>
         <CardContent className="pt-4">
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Mobile: toggle button */}
+          <button
+            onClick={() => setControlsOpen((o) => !o)}
+            className="mb-3 flex items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent md:hidden"
+          >
+            <Settings2 className="size-4" />
+            {controlsOpen ? "Ocultar configuración" : "Configurar gráfico"}
+          </button>
+
+          {/* Controls: visible on desktop always, toggled on mobile */}
+          <div className={`gap-3 ${controlsOpen ? "flex flex-col" : "hidden"} md:flex md:flex-row md:flex-wrap md:items-center`}>
             {/* Chart type */}
             <select className={inputClass} value={chartType} onChange={(e) => setChartType(e.target.value as ChartType)}>
               <option value="bar">Bar vertical</option>
