@@ -36,6 +36,21 @@ const ENGAGEMENT_COLORS: Record<string, string> = {
   high: "#10b981",
 }
 
+const DEPTH_ORDER = ["superficial", "moderate", "deep"]
+const ENGAGEMENT_ORDER = ["low", "medium", "high"]
+
+const DEPTH_LABELS: Record<string, string> = {
+  superficial: "Superficial",
+  moderate: "Moderada",
+  deep: "Profunda",
+}
+
+const ENGAGEMENT_LABELS: Record<string, string> = {
+  low: "Bajo",
+  medium: "Medio",
+  high: "Alto",
+}
+
 export default function SalespersonPage() {
   const { apiParams } = useFilters()
 
@@ -79,7 +94,6 @@ export default function SalespersonPage() {
   }))
 
   // Simple bar: close rate by meeting_depth (aggregate across all engagements)
-  const DEPTH_ORDER = ["superficial", "moderate", "deep"]
   const depthAggMap: Record<string, { total: number; closed: number }> = {}
   for (const item of meetingDepthData ?? []) {
     const key = item.meeting_depth
@@ -93,7 +107,6 @@ export default function SalespersonPage() {
   }))
 
   // Simple bar: close rate by client_engagement (aggregate across all depths)
-  const ENGAGEMENT_ORDER = ["low", "medium", "high"]
   const engAggMap: Record<string, { total: number; closed: number }> = {}
   for (const item of meetingDepthData ?? []) {
     const key = item.client_engagement ?? "unknown"
@@ -226,7 +239,7 @@ export default function SalespersonPage() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={depthCloseRateData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="depth" tick={{ fontSize: 12 }} />
+                <XAxis dataKey="depth" tick={{ fontSize: 12 }} tickFormatter={(v) => DEPTH_LABELS[v] ?? v} />
                 <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
                 <Tooltip formatter={(v) => [`${v}%`, "Tasa de cierre"]} contentStyle={{ fontSize: 12 }} />
                 <Bar dataKey="close_rate" name="Tasa de cierre" radius={[4, 4, 0, 0]}>
@@ -248,7 +261,7 @@ export default function SalespersonPage() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={engCloseRateData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="engagement" tick={{ fontSize: 12 }} />
+                <XAxis dataKey="engagement" tick={{ fontSize: 12 }} tickFormatter={(v) => ENGAGEMENT_LABELS[v] ?? v} />
                 <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
                 <Tooltip formatter={(v) => [`${v}%`, "Tasa de cierre"]} contentStyle={{ fontSize: 12 }} />
                 <Bar dataKey="close_rate" name="Tasa de cierre" radius={[4, 4, 0, 0]}>
