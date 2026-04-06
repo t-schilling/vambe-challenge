@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,12 +21,14 @@ import {
 } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+const LOW_SAMPLE = 3
 
 function HorizontalBar({
   data,
   dataKey,
   nameKey,
   valueKey = "total",
+  totalKey,
   color = "#6366f1",
   unit = "",
 }: {
@@ -33,6 +36,7 @@ function HorizontalBar({
   dataKey: string
   nameKey: string
   valueKey?: string
+  totalKey?: string
   color?: string
   unit?: string
 }) {
@@ -42,8 +46,21 @@ function HorizontalBar({
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 12 }} unit={unit} />
         <YAxis type="category" dataKey={nameKey} tick={{ fontSize: 11 }} width={90} />
-        <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v) => [`${v}${unit}`, dataKey]} />
-        <Bar dataKey={valueKey} name={dataKey} fill={color} radius={[0, 4, 4, 0]} />
+        <Tooltip
+          contentStyle={{ fontSize: 12 }}
+          formatter={(v, _name, props) => {
+            const n = totalKey ? (props.payload[totalKey] as number) : null
+            const label = n !== null ? `${v}${unit} (n=${n})` : `${v}${unit}`
+            const warning = n !== null && n < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
+            return [`${label}${warning}`, dataKey]
+          }}
+        />
+        <Bar dataKey={valueKey} name={dataKey} radius={[0, 4, 4, 0]}>
+          {data.map((row, i) => {
+            const n = totalKey ? (row[totalKey] as number) : Infinity
+            return <Cell key={i} fill={color} opacity={n < LOW_SAMPLE ? 0.4 : 1} />
+          })}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   )
@@ -93,20 +110,21 @@ export default function MarketPage() {
   const sectorData = (sectors ?? []).map((r: Record<string, unknown>) => ({
     sector: r.sector,
     "Tasa cierre": r.close_rate,
+    total: r.total,
   }))
 
   // Backend already returns sorted by VOLUME_ORDER
   const volumeData = (volumes ?? []).map((r: Record<string, unknown>) => ({
     tier: r.tier,
     "Tasa cierre": r.close_rate,
-    "Reuniones": r.total,
+    total: r.total,
   }))
 
   // Backend already returns sorted by COMPANY_ORDER
   const companySizeData = (companySizes ?? []).map((r: Record<string, unknown>) => ({
     company_size: r.company_size,
     "Tasa cierre": r.close_rate,
-    "Reuniones": r.total,
+    total: r.total,
   }))
 
   return (
@@ -125,6 +143,7 @@ export default function MarketPage() {
               dataKey="Tasa cierre"
               nameKey="sector"
               valueKey="Tasa cierre"
+              totalKey="total"
               color="#6366f1"
               unit="%"
             />
@@ -142,8 +161,19 @@ export default function MarketPage() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="tier" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
-                <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v, n) => [`${v}${n === "Tasa cierre" ? "%" : ""}`, n]} />
-                <Bar dataKey="Tasa cierre" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12 }}
+                  formatter={(v, n, props) => {
+                    const total = props.payload.total as number
+                    const warning = total < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
+                    return [`${v}% (n=${total})${warning}`, n]
+                  }}
+                />
+                <Bar dataKey="Tasa cierre" radius={[4, 4, 0, 0]}>
+                  {volumeData.map((row, i) => (
+                    <Cell key={i} fill="#6366f1" opacity={row.total < LOW_SAMPLE ? 0.4 : 1} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -178,7 +208,6 @@ export default function MarketPage() {
               data={(useCases ?? []).map((r: Record<string, unknown>) => ({
                 use_case: r.use_case,
                 total: r.total,
-                "Tasa cierre": r.close_rate,
               }))}
               dataKey="Reuniones"
               nameKey="use_case"
@@ -218,8 +247,19 @@ export default function MarketPage() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="company_size" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
-                <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v, n) => [`${v}${n === "Tasa cierre" ? "%" : ""}`, n]} />
-                <Bar dataKey="Tasa cierre" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12 }}
+                  formatter={(v, n, props) => {
+                    const total = props.payload.total as number
+                    const warning = total < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
+                    return [`${v}% (n=${total})${warning}`, n]
+                  }}
+                />
+                <Bar dataKey="Tasa cierre" radius={[4, 4, 0, 0]}>
+                  {companySizeData.map((row, i) => (
+                    <Cell key={i} fill="#6366f1" opacity={row.total < LOW_SAMPLE ? 0.4 : 1} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
