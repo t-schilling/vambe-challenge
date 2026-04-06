@@ -89,6 +89,9 @@ vambe-challenge/
 | `GET` | `/api/analytics/by-company-size` | Conversión por tamaño de empresa |
 | `GET` | `/api/analytics/by-integration-needs` | Frecuencia de necesidades de integración |
 | `GET` | `/api/analytics/timeline` | Reuniones y cierres por mes |
+| `GET` | `/api/analytics/sector-by-channel` | Cruce sector × canal de descubrimiento |
+| `GET` | `/api/analytics/usecase-by-companysize` | Cruce caso de uso × tamaño de empresa |
+| `GET` | `/api/analytics/companysize-by-channel` | Cruce tamaño de empresa × canal |
 | `POST` | `/api/analytics/insights` | Genera análisis narrativo con Gemini |
 
 Todos los endpoints de analytics aceptan query params opcionales: `vendedor`, `date_from`, `date_to`.
