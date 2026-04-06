@@ -23,11 +23,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const LOW_SAMPLE = 3
 
-function sampleTooltip(value: unknown, label: unknown, total: unknown, unit = "") {
+function sampleTooltip(value: unknown, label: unknown, total: unknown, unit = ""): [string, string] {
   const n = Number(total)
   const warning = !isNaN(n) && n < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
   const nStr = !isNaN(n) ? ` (n=${n})` : ""
-  return [`${value}${unit}${nStr}${warning}`, label] as [string, unknown]
+  return [`${value}${unit}${nStr}${warning}`, String(label)]
 }
 
 function HorizontalBar({
@@ -170,7 +170,7 @@ export default function MarketPage() {
                   formatter={(v, n, props) => sampleTooltip(v, n, props.payload.total, "%")}
                 />
                 <Bar dataKey="Tasa cierre" radius={[4, 4, 0, 0]}>
-                  {volumeData.map((row, i) => (
+                  {volumeData.map((row: { total: number }, i: number) => (
                     <Cell key={i} fill="#6366f1" opacity={Number(row.total) < LOW_SAMPLE ? 0.4 : 1} />
                   ))}
                 </Bar>
@@ -252,7 +252,7 @@ export default function MarketPage() {
                   formatter={(v, n, props) => sampleTooltip(v, n, props.payload.total, "%")}
                 />
                 <Bar dataKey="Tasa cierre" radius={[4, 4, 0, 0]}>
-                  {companySizeData.map((row, i) => (
+                  {companySizeData.map((row: { total: number }, i: number) => (
                     <Cell key={i} fill="#6366f1" opacity={Number(row.total) < LOW_SAMPLE ? 0.4 : 1} />
                   ))}
                 </Bar>
