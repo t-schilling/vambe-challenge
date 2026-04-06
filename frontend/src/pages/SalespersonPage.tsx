@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query"
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -77,18 +78,32 @@ export default function SalespersonPage() {
     deep: r.meeting_depth_distribution?.deep ?? 0,
   }))
 
-  // Grouped bar: close rate by meeting_depth + client_engagement
-  const depthEngagementMap: Record<string, Record<string, number>> = {}
+  // Simple bar: close rate by meeting_depth (aggregate across all engagements)
+  const DEPTH_ORDER = ["superficial", "moderate", "deep"]
+  const depthAggMap: Record<string, { total: number; closed: number }> = {}
   for (const item of meetingDepthData ?? []) {
     const key = item.meeting_depth
-    if (!depthEngagementMap[key]) depthEngagementMap[key] = {}
-    depthEngagementMap[key][item.client_engagement ?? "unknown"] = item.close_rate
+    if (!depthAggMap[key]) depthAggMap[key] = { total: 0, closed: 0 }
+    depthAggMap[key].total += item.total
+    depthAggMap[key].closed += item.closed
   }
-  const depthEngagementData = Object.entries(depthEngagementMap).map(([depth, engMap]) => ({
-    depth,
-    low: engMap.low ?? 0,
-    medium: engMap.medium ?? 0,
-    high: engMap.high ?? 0,
+  const depthCloseRateData = DEPTH_ORDER.filter((d) => depthAggMap[d]).map((d) => ({
+    depth: d,
+    close_rate: depthAggMap[d].total > 0 ? Math.round((depthAggMap[d].closed / depthAggMap[d].total) * 100) : 0,
+  }))
+
+  // Simple bar: close rate by client_engagement (aggregate across all depths)
+  const ENGAGEMENT_ORDER = ["low", "medium", "high"]
+  const engAggMap: Record<string, { total: number; closed: number }> = {}
+  for (const item of meetingDepthData ?? []) {
+    const key = item.client_engagement ?? "unknown"
+    if (!engAggMap[key]) engAggMap[key] = { total: 0, closed: 0 }
+    engAggMap[key].total += item.total
+    engAggMap[key].closed += item.closed
+  }
+  const engCloseRateData = ENGAGEMENT_ORDER.filter((e) => engAggMap[e]).map((e) => ({
+    engagement: e,
+    close_rate: engAggMap[e].total > 0 ? Math.round((engAggMap[e].closed / engAggMap[e].total) * 100) : 0,
   }))
 
   return (
@@ -201,29 +216,51 @@ export default function SalespersonPage() {
         </Card>
       </div>
 
-      {/* Close rate by meeting_depth + client_engagement */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tasa de cierre por profundidad de reunión y engagement del cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={depthEngagementData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="depth" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
-              <Tooltip
-                formatter={(v) => [`${v}%`, ""]}
-                contentStyle={{ fontSize: 12 }}
-              />
-              <Legend iconSize={10} formatter={(v) => <span style={{ fontSize: 12 }}>{v}</span>} />
-              <Bar dataKey="low" name="Engagement bajo" fill={ENGAGEMENT_COLORS.low} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="medium" name="Engagement medio" fill={ENGAGEMENT_COLORS.medium} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="high" name="Engagement alto" fill={ENGAGEMENT_COLORS.high} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Close rate by meeting depth */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tasa de cierre por profundidad de reunión</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={depthCloseRateData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="depth" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
+                <Tooltip formatter={(v) => [`${v}%`, "Tasa de cierre"]} contentStyle={{ fontSize: 12 }} />
+                <Bar dataKey="close_rate" name="Tasa de cierre" radius={[4, 4, 0, 0]}>
+                  {depthCloseRateData.map((entry) => (
+                    <Cell key={entry.depth} fill={DEPTH_COLORS[entry.depth] ?? "#6366f1"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Close rate by client engagement */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tasa de cierre por engagement del cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={engCloseRateData} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="engagement" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
+                <Tooltip formatter={(v) => [`${v}%`, "Tasa de cierre"]} contentStyle={{ fontSize: 12 }} />
+                <Bar dataKey="close_rate" name="Tasa de cierre" radius={[4, 4, 0, 0]}>
+                  {engCloseRateData.map((entry) => (
+                    <Cell key={entry.engagement} fill={ENGAGEMENT_COLORS[entry.engagement] ?? "#6366f1"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
