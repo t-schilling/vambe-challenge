@@ -1,4 +1,6 @@
-from typing import Optional
+import json
+from typing import Any, Optional
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -9,6 +11,16 @@ class Settings(BaseSettings):
     csv_path: str = "vambe_clients.csv"
     allowed_origins: list[str] = ["http://localhost:5173"]
     process_api_key: Optional[str] = None
+
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_origins(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
     class Config:
         env_file = ".env"
