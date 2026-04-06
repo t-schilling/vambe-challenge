@@ -27,7 +27,7 @@ Dashboard analítico sobre reuniones de ventas de Vambe. Procesa ~60 transcripci
 vambe-challenge/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py            # FastAPI app + CORS + lifespan
+│   │   ├── main.py            # FastAPI app + CORS + lifespan (auto-populate)
 │   │   ├── config.py          # Pydantic settings (env vars)
 │   │   ├── database.py        # SQLAlchemy async engine + session
 │   │   ├── models.py          # ORM: tabla clients
@@ -40,6 +40,7 @@ vambe-challenge/
 │   │       ├── categorizer.py    # Integración Gemini
 │   │       └── csv_processor.py  # Ingesta del CSV
 │   ├── vambe_clients.csv      # Datos fuente (~60 clientes)
+│   ├── Dockerfile             # Imagen Python 3.11-slim
 │   ├── railway.json           # Configuración de deploy Railway
 │   └── requirements.txt
 ├── frontend/
@@ -59,8 +60,12 @@ vambe-challenge/
 │   │   └── lib/
 │   │       ├── api.ts                # Axios client
 │   │       └── export.ts             # CSV export util
+│   ├── Dockerfile             # Build multi-stage: Node → Nginx
+│   ├── nginx.conf             # SPA routing
 │   ├── vercel.json            # SPA routing para Vercel
 │   └── package.json
+├── docker-compose.yml         # Postgres + backend + frontend
+└── .env.example               # Solo requiere GEMINI_API_KEY
 ```
 
 ---
@@ -133,12 +138,38 @@ La exportación se genera en el browser desde los datos ya cargados (BOM UTF-8 p
 
 ## Desarrollo local
 
-### Requisitos
+### Opción A — Docker (recomendado)
+
+Requiere solo Docker Desktop y una API key de Gemini.
+
+```bash
+cp .env.example .env
+# Editar .env: GEMINI_API_KEY=tu_clave
+
+docker compose up --build
+```
+
+| Servicio | URL |
+|----------|-----|
+| Frontend | http://localhost:5173 |
+| Backend (docs) | http://localhost:8000/docs |
+
+La base de datos se crea y se pobla automáticamente al iniciar el backend. El proceso de categorización con Gemini corre en background (~2–3 min para ~60 clientes). Los datos persisten entre reinicios gracias al volumen `postgres_data`.
+
+Para reprocesar forzando re-categorización:
+
+```bash
+curl -X POST "http://localhost:8000/api/process?force=true"
+```
+
+### Opción B — Manual
+
+#### Requisitos
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 15+ corriendo localmente
 
-### Backend
+#### Backend
 
 ```bash
 cd backend
@@ -147,18 +178,18 @@ source .venv/bin/activate  # Windows: .\.venv\Scripts\activate
 pip install -r requirements.txt
 
 cp .env.example .env
-# Editar .env con GEMINI_API_KEY y DATABASE_URL
+# Editar .env: GEMINI_API_KEY y DATABASE_URL
 
 uvicorn app.main:app --reload
 ```
 
-La DB se crea automáticamente al iniciar. Para poblarla:
+La DB se crea y puebla automáticamente al iniciar. Para forzar re-categorización:
 
 ```bash
-curl -X POST http://localhost:8000/api/process
+curl -X POST "http://localhost:8000/api/process?force=true"
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
 cd frontend
