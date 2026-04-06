@@ -15,7 +15,7 @@ import {
 } from "recharts"
 import { Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react"
 import { useFilters } from "@/contexts/FiltersContext"
-import { getOverview, getBySector, getByChannel, getTimeline, generateInsights } from "@/lib/api"
+import { getOverview, getBySector, getByChannel, getTimeline, generateInsights, type OverviewData } from "@/lib/api"
 import KPICard from "@/components/dashboard/KPICard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,7 @@ export default function OverviewPage() {
     setInsightsError(null)
   }, [apiParams])
 
-  const { data: overview, isLoading: loadingOverview } = useQuery({
+  const { data: overview, isLoading: loadingOverview } = useQuery<OverviewData>({
     queryKey: ["overview", apiParams],
     queryFn: () => getOverview(apiParams),
   })

@@ -15,8 +15,18 @@ export const getFilterOptions = () =>
   api.get("/api/clients/filter-options").then((r) => r.data)
 
 // Analytics
+export interface OverviewData {
+  total_clients: number
+  closed_count: number
+  close_rate: number
+  avg_interaction_volume: number
+  top_vendedor: string | null
+  deep_count: number
+  pct_deep: number
+}
+
 export const getOverview = (params?: Record<string, string>) =>
-  api.get("/api/analytics/overview", { params }).then((r) => r.data)
+  api.get<OverviewData>("/api/analytics/overview", { params }).then((r) => r.data)
 
 export const getBySector = (params?: Record<string, string>) =>
   api.get("/api/analytics/by-sector", { params }).then((r) => r.data)
