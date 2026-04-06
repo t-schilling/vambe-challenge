@@ -133,30 +133,30 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[180px] lg:h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={timeline ?? []} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorCloseRate" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
-                <Tooltip
-                  formatter={(v) => [`${v}%`, "Cierre"]}
-                  contentStyle={{ fontSize: 12 }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="close_rate"
-                  stroke="#6366f1"
-                  strokeWidth={2}
-                  fill="url(#colorCloseRate)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timeline ?? []} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorCloseRate" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(v) => [`${v}%`, "Cierre"]}
+                    contentStyle={{ fontSize: 12 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="close_rate"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    fill="url(#colorCloseRate)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -168,33 +168,33 @@ export default function OverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[180px] lg:h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={sectors ?? []}
-                  dataKey="total"
-                  nameKey="sector"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={2}
-                >
-                  {(sectors ?? []).map((_: unknown, i: number) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(v, name) => [v, name]}
-                  contentStyle={{ fontSize: 12 }}
-                />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sectors ?? []}
+                    dataKey="total"
+                    nameKey="sector"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {(sectors ?? []).map((_: unknown, i: number) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v, name) => [v, name]}
+                    contentStyle={{ fontSize: 12 }}
+                  />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
@@ -207,17 +207,17 @@ export default function OverviewPage() {
         </CardHeader>
         <CardContent>
           <div className="h-[180px] lg:h-[240px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={channels ?? []} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="channel" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip contentStyle={{ fontSize: 12 }} />
-              <Legend iconSize={10} formatter={(v) => <span style={{ fontSize: 12 }}>{v}</span>} />
-              <Bar dataKey="total" name="Reuniones" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="closed" name="Cerrados" fill="#22d3ee" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={channels ?? []} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="channel" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Legend iconSize={10} formatter={(v) => <span style={{ fontSize: 12 }}>{v}</span>} />
+                <Bar dataKey="total" name="Reuniones" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="closed" name="Cerrados" fill="#22d3ee" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
