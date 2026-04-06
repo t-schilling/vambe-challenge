@@ -428,6 +428,49 @@ async def companysize_by_channel(
     ]
 
 
+VALID_DIMENSIONS = {
+    "sector", "vendedor", "discovery_channel", "primary_use_case",
+    "main_pain_point", "client_sentiment", "urgency", "company_size",
+    "interaction_volume_tier", "meeting_depth", "client_engagement",
+}
+
+
+@router.get("/cross")
+async def cross_analysis(
+    dim1: str = Query(...),
+    dim2: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    from fastapi import HTTPException
+    if dim1 not in VALID_DIMENSIONS or dim2 not in VALID_DIMENSIONS:
+        raise HTTPException(status_code=400, detail=f"Invalid dimension. Valid: {sorted(VALID_DIMENSIONS)}")
+    col1 = getattr(Client, dim1)
+    col2 = getattr(Client, dim2)
+    q = apply_filters(
+        select(
+            col1.label("dim1_value"),
+            col2.label("dim2_value"),
+            func.count(Client.id).label("total"),
+            func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
+        )
+        .where(col1.isnot(None), col2.isnot(None))
+        .group_by(col1, col2),
+        gf,
+    )
+    result = await db.execute(q)
+    return [
+        {
+            "dim1_value": r.dim1_value,
+            "dim2_value": r.dim2_value,
+            "total": r.total,
+            "closed": int(r.closed or 0),
+            "close_rate": close_rate(int(r.closed or 0), r.total),
+        }
+        for r in result.all()
+    ]
+
+
 @router.post("/insights", response_model=InsightResponse)
 async def get_insights(request: InsightRequest):
     result = await generate_insights(request.metrics)

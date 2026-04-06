@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   BarChart,
@@ -229,6 +230,43 @@ export default function MarketPage() {
     queryFn: () => getCompanySizeByChannel(apiParams),
   })
 
+  // Cross-analysis — sector × channel
+  const sectorChannelRaw: Record<string, unknown>[] = sectorByChannel ?? []
+  const uniqueChannels = useMemo(
+    () => [...new Set(sectorChannelRaw.map((d) => String(d.channel)))].sort(),
+    [sectorByChannel]
+  )
+  const uniqueSectors = useMemo(
+    () => [...new Set(sectorChannelRaw.map((d) => String(d.sector)))].sort(),
+    [sectorByChannel]
+  )
+  const sectorChannelStacked = useMemo(
+    () => buildStackedData(sectorChannelRaw, "sector", "channel", "total", uniqueSectors),
+    [sectorByChannel, uniqueSectors]
+  )
+
+  // Cross-analysis — use case × company size
+  const usecaseSizeRaw: Record<string, unknown>[] = usecaseByCompanySize ?? []
+  const uniqueUseCases = useMemo(
+    () => [...new Set(usecaseSizeRaw.map((d) => String(d.use_case)))].sort(),
+    [usecaseByCompanySize]
+  )
+  const usecaseSizeStacked = useMemo(
+    () => buildStackedData(usecaseSizeRaw, "company_size", "use_case", "total", COMPANY_ORDER),
+    [usecaseByCompanySize]
+  )
+
+  // Cross-analysis — company size × channel
+  const sizeChannelRaw: Record<string, unknown>[] = companySizeByChannel ?? []
+  const uniqueChannelsBySize = useMemo(
+    () => [...new Set(sizeChannelRaw.map((d) => String(d.channel)))].sort(),
+    [companySizeByChannel]
+  )
+  const sizeChannelStacked = useMemo(
+    () => buildStackedData(sizeChannelRaw, "company_size", "channel", "total", COMPANY_ORDER),
+    [companySizeByChannel]
+  )
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -398,25 +436,18 @@ export default function MarketPage() {
             <CardTitle>Canales por sector</CardTitle>
           </CardHeader>
           <CardContent>
-            {(() => {
-              const raw: Record<string, unknown>[] = sectorByChannel ?? []
-              const channels = [...new Set(raw.map((d) => String(d.channel)))]
-              const stacked = buildStackedData(raw, "sector", "channel", "total")
-              return (
-                <ResponsiveContainer width="100%" height={Math.max(200, stacked.length * 36)}>
-                  <BarChart data={stacked} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
-                    <XAxis type="number" tick={{ fontSize: 11 }} />
-                    <YAxis type="category" dataKey="row" tick={{ fontSize: 11 }} width={90} />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
-                    <Legend iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
-                    {channels.map((ch, i) => (
-                      <Bar key={ch} dataKey={ch} stackId="a" fill={CROSS_COLORS[i % CROSS_COLORS.length]} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              )
-            })()}
+            <ResponsiveContainer width="100%" height={Math.max(200, sectorChannelStacked.length * 36)}>
+              <BarChart data={sectorChannelStacked} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="row" tick={{ fontSize: 11 }} width={90} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Legend iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
+                {uniqueChannels.map((ch, i) => (
+                  <Bar key={ch} dataKey={ch} stackId="a" fill={CROSS_COLORS[i % CROSS_COLORS.length]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
@@ -430,6 +461,8 @@ export default function MarketPage() {
               rowKey="sector"
               colKey="channel"
               rowLabel="Sector"
+              rowOrder={uniqueSectors}
+              colOrder={uniqueChannels}
             />
           </CardContent>
         </Card>
@@ -442,25 +475,18 @@ export default function MarketPage() {
             <CardTitle>Casos de uso por tamaño de empresa</CardTitle>
           </CardHeader>
           <CardContent>
-            {(() => {
-              const raw: Record<string, unknown>[] = usecaseByCompanySize ?? []
-              const useCases = [...new Set(raw.map((d) => String(d.use_case)))]
-              const stacked = buildStackedData(raw, "company_size", "use_case", "total", COMPANY_ORDER)
-              return (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={stacked} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="row" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ fontSize: 12 }} />
-                    <Legend iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
-                    {useCases.map((uc, i) => (
-                      <Bar key={uc} dataKey={uc} stackId="a" fill={CROSS_COLORS[i % CROSS_COLORS.length]} />
-                    ))}
-                  </BarChart>
-                </ResponsiveContainer>
-              )
-            })()}
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={usecaseSizeStacked} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="row" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Legend iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
+                {uniqueUseCases.map((uc, i) => (
+                  <Bar key={uc} dataKey={uc} stackId="a" fill={CROSS_COLORS[i % CROSS_COLORS.length]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
@@ -486,25 +512,18 @@ export default function MarketPage() {
           <CardTitle>Canales por tamaño de empresa</CardTitle>
         </CardHeader>
         <CardContent>
-          {(() => {
-            const raw: Record<string, unknown>[] = companySizeByChannel ?? []
-            const channels = [...new Set(raw.map((d) => String(d.channel)))]
-            const stacked = buildStackedData(raw, "company_size", "channel", "total", COMPANY_ORDER)
-            return (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={stacked} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="row" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ fontSize: 12 }} />
-                  <Legend iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
-                  {channels.map((ch, i) => (
-                    <Bar key={ch} dataKey={ch} stackId="a" fill={CROSS_COLORS[i % CROSS_COLORS.length]} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-            )
-          })()}
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={sizeChannelStacked} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="row" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip contentStyle={{ fontSize: 12 }} />
+              <Legend iconSize={8} formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>} />
+              {uniqueChannelsBySize.map((ch, i) => (
+                <Bar key={ch} dataKey={ch} stackId="a" fill={CROSS_COLORS[i % CROSS_COLORS.length]} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>

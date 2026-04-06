@@ -69,6 +69,10 @@ export const getUsecaseByCompanySize = (params?: Record<string, string>) =>
 export const getCompanySizeByChannel = (params?: Record<string, string>) =>
   api.get("/api/analytics/companysize-by-channel", { params }).then((r) => r.data)
 
+// Cross-analysis
+export const getCross = (dim1: string, dim2: string, params?: Record<string, string>) =>
+  api.get("/api/analytics/cross", { params: { dim1, dim2, ...params } }).then((r) => r.data)
+
 // Insights
 export const generateInsights = (metrics: Record<string, unknown>) =>
   api.post("/api/analytics/insights", { metrics }).then((r) => r.data)
