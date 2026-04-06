@@ -41,7 +41,7 @@ function HorizontalBar({
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 12 }} unit={unit} />
-        <YAxis type="category" dataKey={nameKey} tick={{ fontSize: 12 }} width={120} />
+        <YAxis type="category" dataKey={nameKey} tick={{ fontSize: 11 }} width={90} />
         <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v) => [`${v}${unit}`, dataKey]} />
         <Bar dataKey={valueKey} name={dataKey} fill={color} radius={[0, 4, 4, 0]} />
       </BarChart>
