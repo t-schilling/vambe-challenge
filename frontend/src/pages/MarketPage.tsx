@@ -23,6 +23,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const LOW_SAMPLE = 3
 
+function sampleTooltip(value: unknown, label: unknown, total: unknown, unit = "") {
+  const n = Number(total)
+  const warning = !isNaN(n) && n < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
+  const nStr = !isNaN(n) ? ` (n=${n})` : ""
+  return [`${value}${unit}${nStr}${warning}`, label] as [string, unknown]
+}
+
 function HorizontalBar({
   data,
   dataKey,
@@ -48,17 +55,14 @@ function HorizontalBar({
         <YAxis type="category" dataKey={nameKey} tick={{ fontSize: 11 }} width={90} />
         <Tooltip
           contentStyle={{ fontSize: 12 }}
-          formatter={(v, _name, props) => {
-            const n = totalKey ? (props.payload[totalKey] as number) : null
-            const label = n !== null ? `${v}${unit} (n=${n})` : `${v}${unit}`
-            const warning = n !== null && n < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
-            return [`${label}${warning}`, dataKey]
-          }}
+          formatter={(v, _name, props) =>
+            sampleTooltip(v, dataKey, totalKey ? props.payload[totalKey] : undefined, unit)
+          }
         />
         <Bar dataKey={valueKey} name={dataKey} radius={[0, 4, 4, 0]}>
           {data.map((row, i) => {
-            const n = totalKey ? (row[totalKey] as number) : Infinity
-            return <Cell key={i} fill={color} opacity={n < LOW_SAMPLE ? 0.4 : 1} />
+            const n = totalKey ? Number(row[totalKey]) : Infinity
+            return <Cell key={i} fill={color} opacity={!isNaN(n) && n < LOW_SAMPLE ? 0.4 : 1} />
           })}
         </Bar>
       </BarChart>
@@ -163,15 +167,11 @@ export default function MarketPage() {
                 <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
                 <Tooltip
                   contentStyle={{ fontSize: 12 }}
-                  formatter={(v, n, props) => {
-                    const total = props.payload.total as number
-                    const warning = total < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
-                    return [`${v}% (n=${total})${warning}`, n]
-                  }}
+                  formatter={(v, n, props) => sampleTooltip(v, n, props.payload.total, "%")}
                 />
                 <Bar dataKey="Tasa cierre" radius={[4, 4, 0, 0]}>
                   {volumeData.map((row, i) => (
-                    <Cell key={i} fill="#6366f1" opacity={row.total < LOW_SAMPLE ? 0.4 : 1} />
+                    <Cell key={i} fill="#6366f1" opacity={Number(row.total) < LOW_SAMPLE ? 0.4 : 1} />
                   ))}
                 </Bar>
               </BarChart>
@@ -249,15 +249,11 @@ export default function MarketPage() {
                 <YAxis tick={{ fontSize: 12 }} unit="%" domain={[0, 100]} />
                 <Tooltip
                   contentStyle={{ fontSize: 12 }}
-                  formatter={(v, n, props) => {
-                    const total = props.payload.total as number
-                    const warning = total < LOW_SAMPLE ? " ⚠ muestra pequeña" : ""
-                    return [`${v}% (n=${total})${warning}`, n]
-                  }}
+                  formatter={(v, n, props) => sampleTooltip(v, n, props.payload.total, "%")}
                 />
                 <Bar dataKey="Tasa cierre" radius={[4, 4, 0, 0]}>
                   {companySizeData.map((row, i) => (
-                    <Cell key={i} fill="#6366f1" opacity={row.total < LOW_SAMPLE ? 0.4 : 1} />
+                    <Cell key={i} fill="#6366f1" opacity={Number(row.total) < LOW_SAMPLE ? 0.4 : 1} />
                   ))}
                 </Bar>
               </BarChart>
