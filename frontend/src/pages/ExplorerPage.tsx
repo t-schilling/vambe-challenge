@@ -213,15 +213,17 @@ export default function ExplorerPage() {
         <CardContent className="pt-4">
           {/* Mobile: toggle button */}
           <button
+            type="button"
+            aria-expanded={controlsOpen}
             onClick={() => setControlsOpen((o) => !o)}
-            className="mb-3 flex items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent md:hidden"
+            className="mb-3 flex items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent lg:hidden"
           >
             <Settings2 className="size-4" />
             {controlsOpen ? "Ocultar configuración" : "Configurar gráfico"}
           </button>
 
           {/* Controls: visible on desktop always, toggled on mobile */}
-          <div className={`gap-3 ${controlsOpen ? "flex flex-col" : "hidden"} md:flex md:flex-row md:flex-wrap md:items-center`}>
+          <div className={`gap-3 ${controlsOpen ? "flex flex-col" : "hidden"} lg:flex lg:flex-row lg:flex-wrap lg:items-center`}>
             {/* Chart type */}
             <select className={inputClass} value={chartType} onChange={(e) => setChartType(e.target.value as ChartType)}>
               <option value="bar">Bar vertical</option>
