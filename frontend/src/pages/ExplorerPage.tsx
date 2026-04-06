@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, ScatterChart, Scatter, ZAxis, Legend, Cell,
+  LineChart, Line, ScatterChart, Scatter, ZAxis, Legend,
 } from "recharts"
 import { Loader2, Settings2 } from "lucide-react"
 import { useFilters } from "@/contexts/FiltersContext"
@@ -199,11 +199,11 @@ export default function ExplorerPage() {
 
   // Matrix derived from cross endpoint
   const matrixRows = useMemo(
-    () => [...new Set((crossData ?? []).map((r: Record<string, unknown>) => String(r.dim1_value)))].sort(),
+    () => Array.from(new Set<string>((crossData ?? []).map((r: Record<string, unknown>) => String(r.dim1_value)))).sort(),
     [crossData]
   )
   const matrixCols = useMemo(
-    () => [...new Set((crossData ?? []).map((r: Record<string, unknown>) => String(r.dim2_value)))].sort(),
+    () => Array.from(new Set<string>((crossData ?? []).map((r: Record<string, unknown>) => String(r.dim2_value)))).sort(),
     [crossData]
   )
   const matrixMap = useMemo(() => {
