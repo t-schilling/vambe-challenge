@@ -338,6 +338,96 @@ async def by_integration_needs(
     return [{"need": r.need, "total": r.total} for r in result.all()]
 
 
+@router.get("/sector-by-channel")
+async def sector_by_channel(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
+        select(
+            Client.sector,
+            Client.discovery_channel,
+            func.count(Client.id).label("total"),
+            func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
+        )
+        .where(Client.sector.isnot(None))
+        .where(Client.discovery_channel.isnot(None))
+        .group_by(Client.sector, Client.discovery_channel),
+        gf,
+    )
+    result = await db.execute(q)
+    return [
+        {
+            "sector": r.sector,
+            "channel": r.discovery_channel,
+            "total": r.total,
+            "closed": int(r.closed or 0),
+            "close_rate": close_rate(int(r.closed or 0), r.total),
+        }
+        for r in result.all()
+    ]
+
+
+@router.get("/usecase-by-companysize")
+async def usecase_by_companysize(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
+        select(
+            Client.primary_use_case,
+            Client.company_size,
+            func.count(Client.id).label("total"),
+            func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
+        )
+        .where(Client.primary_use_case.isnot(None))
+        .where(Client.company_size.isnot(None))
+        .group_by(Client.primary_use_case, Client.company_size),
+        gf,
+    )
+    result = await db.execute(q)
+    return [
+        {
+            "use_case": r.primary_use_case,
+            "company_size": r.company_size,
+            "total": r.total,
+            "closed": int(r.closed or 0),
+            "close_rate": close_rate(int(r.closed or 0), r.total),
+        }
+        for r in result.all()
+    ]
+
+
+@router.get("/companysize-by-channel")
+async def companysize_by_channel(
+    db: AsyncSession = Depends(get_db),
+    gf: dict = Depends(global_filters),
+):
+    q = apply_filters(
+        select(
+            Client.company_size,
+            Client.discovery_channel,
+            func.count(Client.id).label("total"),
+            func.sum(case((Client.closed == True, 1), else_=0)).label("closed"),
+        )
+        .where(Client.company_size.isnot(None))
+        .where(Client.discovery_channel.isnot(None))
+        .group_by(Client.company_size, Client.discovery_channel),
+        gf,
+    )
+    result = await db.execute(q)
+    return [
+        {
+            "company_size": r.company_size,
+            "channel": r.discovery_channel,
+            "total": r.total,
+            "closed": int(r.closed or 0),
+            "close_rate": close_rate(int(r.closed or 0), r.total),
+        }
+        for r in result.all()
+    ]
+
+
 @router.post("/insights", response_model=InsightResponse)
 async def get_insights(request: InsightRequest):
     result = await generate_insights(request.metrics)

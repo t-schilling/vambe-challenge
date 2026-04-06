@@ -59,6 +59,16 @@ export const getByIntegrationNeeds = (params?: Record<string, string>) =>
 export const getTimeline = (params?: Record<string, string>) =>
   api.get("/api/analytics/timeline", { params }).then((r) => r.data)
 
+// Cross-analysis
+export const getSectorByChannel = (params?: Record<string, string>) =>
+  api.get("/api/analytics/sector-by-channel", { params }).then((r) => r.data)
+
+export const getUsecaseByCompanySize = (params?: Record<string, string>) =>
+  api.get("/api/analytics/usecase-by-companysize", { params }).then((r) => r.data)
+
+export const getCompanySizeByChannel = (params?: Record<string, string>) =>
+  api.get("/api/analytics/companysize-by-channel", { params }).then((r) => r.data)
+
 // Insights
 export const generateInsights = (metrics: Record<string, unknown>) =>
   api.post("/api/analytics/insights", { metrics }).then((r) => r.data)
