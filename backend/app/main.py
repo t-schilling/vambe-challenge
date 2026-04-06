@@ -1,14 +1,18 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.routers import clients, analytics, process
+from app.routers.process import _run_processing, _state
 from app.config import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    _state["running"] = True
+    asyncio.create_task(_run_processing(force=False))
     yield
 
 
