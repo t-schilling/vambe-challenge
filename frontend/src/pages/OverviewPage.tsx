@@ -113,9 +113,9 @@ export default function OverviewPage() {
           subtitle={`${overview?.closed_count ?? 0} cerrados`}
         />
         <KPICard
-          title="Promedio palabras"
-          value={overview ? Math.round(overview.avg_transcript_words).toLocaleString() : "—"}
-          subtitle="por transcripción"
+          title="Reuniones profundas"
+          value={overview ? `${overview.pct_deep}%` : "—"}
+          subtitle={overview ? `${overview.deep_count} de ${overview.total_clients}` : ""}
         />
         <KPICard
           title="Vendedor top"

@@ -3,7 +3,6 @@ interface SalespersonRow {
   total: number
   closed: number
   close_rate: number
-  avg_words: number
   meeting_depth_distribution: Record<string, number>
 }
 
@@ -77,12 +76,6 @@ export default function SalespersonPage() {
   const rowsWithPct = rows.map((r) => ({
     ...r,
     pctDeep: r.total > 0 ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100) : 0,
-  }))
-
-  // Bar chart data: avg words per salesperson
-  const avgWordsData = rows.map((r) => ({
-    vendedor: r.vendedor,
-    palabras: r.avg_words,
   }))
 
   // Stacked bar: meeting_depth distribution per vendedor
@@ -163,7 +156,6 @@ export default function SalespersonPage() {
                   <th className="pb-2 pr-4 font-medium text-right">Reuniones</th>
                   <th className="pb-2 pr-4 font-medium text-right">Cerrados</th>
                   <th className="pb-2 pr-4 font-medium text-right">Tasa cierre</th>
-                  <th className="pb-2 pr-4 font-medium text-right">Avg palabras</th>
                   <th className="pb-2 pr-4 font-medium text-right">% Deep</th>
                 </tr>
               </thead>
@@ -178,7 +170,6 @@ export default function SalespersonPage() {
                         {r.close_rate}%
                       </span>
                     </td>
-                    <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
                     <td className="py-2.5 pr-4 text-right">{r.pctDeep}%</td>
                   </tr>
                 ))}
@@ -189,24 +180,6 @@ export default function SalespersonPage() {
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Avg words per salesperson */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Promedio de palabras por vendedor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={avgWordsData} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="vendedor" tick={{ fontSize: 12 }} width={56} />
-                <Tooltip contentStyle={{ fontSize: 12 }} />
-                <Bar dataKey="palabras" name="Avg palabras" fill="#6366f1" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
         {/* Meeting depth distribution — stacked bar */}
         <Card>
           <CardHeader>
