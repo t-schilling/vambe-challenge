@@ -50,7 +50,7 @@ def _get_model():
 
 def _sanitize_transcript(transcript: str) -> str:
     transcript = transcript[:MAX_TRANSCRIPT_LENGTH]
-    transcript = transcript.replace("\x00", "").strip()
+    transcript = transcript.replace("\x00", "").replace("</transcript>", "").strip()
     return transcript
 
 

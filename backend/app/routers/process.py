@@ -1,3 +1,5 @@
+import secrets
+from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from app.database import AsyncSessionLocal
 from app.services.csv_processor import process_csv
@@ -18,8 +20,8 @@ async def _run_processing(force: bool) -> None:
         _state["running"] = False
 
 
-def verify_process_key(x_api_key: str = Header(default=None)):
-    if settings.process_api_key and x_api_key != settings.process_api_key:
+def verify_process_key(x_api_key: Optional[str] = Header(default=None)):
+    if settings.process_api_key and not secrets.compare_digest(x_api_key or "", settings.process_api_key):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
