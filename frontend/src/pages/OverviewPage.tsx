@@ -102,7 +102,7 @@ export default function OverviewPage() {
       <h1 className="text-2xl font-semibold">Overview</h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <KPICard
           title="Total clientes"
           value={overview?.total_clients ?? "—"}
@@ -116,6 +116,11 @@ export default function OverviewPage() {
           title="Reuniones profundas"
           value={overview ? `${overview.pct_deep}%` : "—"}
           subtitle={overview ? `${overview.deep_count} de ${overview.total_clients}` : ""}
+        />
+        <KPICard
+          title="Promedio palabras"
+          value={overview ? Math.round(overview.avg_transcript_words).toLocaleString() : "—"}
+          subtitle="por transcripción"
         />
         <KPICard
           title="Vendedor top"

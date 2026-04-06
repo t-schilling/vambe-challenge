@@ -44,6 +44,7 @@ async def get_overview(
             select(
                 func.count(Client.id).label("total"),
                 func.sum(case((Client.closed == True, 1), else_=0)).label("closed_count"),
+                func.avg(Client.transcript_word_count).label("avg_words"),
                 func.avg(Client.interaction_volume_estimate).label("avg_volume"),
                 func.sum(case((Client.meeting_depth == "deep", 1), else_=0)).label("deep_count"),
             ),
@@ -74,6 +75,7 @@ async def get_overview(
         "total_clients": total,
         "closed_count": int(row.closed_count or 0),
         "close_rate": close_rate(int(row.closed_count or 0), total),
+        "avg_transcript_words": round(float(row.avg_words or 0), 1),
         "avg_interaction_volume": round(float(row.avg_volume or 0), 1),
         "top_vendedor": top_vendedor.vendedor if top_vendedor else None,
         "deep_count": deep_count,
