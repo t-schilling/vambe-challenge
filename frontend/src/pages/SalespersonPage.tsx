@@ -58,6 +58,11 @@ export default function SalespersonPage() {
 
   const rows: SalespersonRow[] = salespersons ?? []
 
+  const rowsWithPct = rows.map((r) => ({
+    ...r,
+    pctDeep: r.total > 0 ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100) : 0,
+  }))
+
   // Bar chart data: avg words per salesperson
   const avgWordsData = rows.map((r) => ({
     vendedor: r.vendedor,
@@ -97,37 +102,32 @@ export default function SalespersonPage() {
         </CardHeader>
         <CardContent>
           {/* Mobile: card view */}
-          <div className="divide-y md:hidden">
-            {rows.map((r) => {
-              const pctDeep = r.total > 0
-                ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100)
-                : 0
-              return (
-                <div key={r.vendedor} className="py-3">
-                  <p className="font-medium">{r.vendedor}</p>
-                  <div className="mt-1.5 grid grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Reuniones</p>
-                      <p className="font-medium">{r.total}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Tasa cierre</p>
-                      <p className={`font-medium ${r.close_rate >= 50 ? "text-emerald-600" : r.close_rate >= 30 ? "text-amber-600" : "text-rose-600"}`}>
-                        {r.close_rate}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">% Deep</p>
-                      <p className="font-medium">{pctDeep}%</p>
-                    </div>
+          <div className="divide-y lg:hidden">
+            {rowsWithPct.map((r) => (
+              <div key={r.vendedor} className="py-3">
+                <p className="font-medium">{r.vendedor}</p>
+                <div className="mt-1.5 grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Reuniones</p>
+                    <p className="font-medium">{r.total}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tasa cierre</p>
+                    <p className={`font-medium ${r.close_rate >= 50 ? "text-emerald-600" : r.close_rate >= 30 ? "text-amber-600" : "text-rose-600"}`}>
+                      {r.close_rate}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">% Deep</p>
+                    <p className="font-medium">{r.pctDeep}%</p>
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
 
           {/* Desktop: table */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
@@ -140,25 +140,20 @@ export default function SalespersonPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => {
-                  const pctDeep = r.total > 0
-                    ? Math.round((r.meeting_depth_distribution?.deep ?? 0) / r.total * 100)
-                    : 0
-                  return (
-                    <tr key={r.vendedor} className="border-b last:border-0">
-                      <td className="py-2.5 pr-4 font-medium">{r.vendedor}</td>
-                      <td className="py-2.5 pr-4 text-right">{r.total}</td>
-                      <td className="py-2.5 pr-4 text-right">{r.closed}</td>
-                      <td className="py-2.5 pr-4 text-right">
-                        <span className={r.close_rate >= 50 ? "text-emerald-600 font-medium" : r.close_rate >= 30 ? "text-amber-600" : "text-rose-600"}>
-                          {r.close_rate}%
-                        </span>
-                      </td>
-                      <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
-                      <td className="py-2.5 pr-4 text-right">{pctDeep}%</td>
-                    </tr>
-                  )
-                })}
+                {rowsWithPct.map((r) => (
+                  <tr key={r.vendedor} className="border-b last:border-0">
+                    <td className="py-2.5 pr-4 font-medium">{r.vendedor}</td>
+                    <td className="py-2.5 pr-4 text-right">{r.total}</td>
+                    <td className="py-2.5 pr-4 text-right">{r.closed}</td>
+                    <td className="py-2.5 pr-4 text-right">
+                      <span className={r.close_rate >= 50 ? "text-emerald-600 font-medium" : r.close_rate >= 30 ? "text-amber-600" : "text-rose-600"}>
+                        {r.close_rate}%
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
+                    <td className="py-2.5 pr-4 text-right">{r.pctDeep}%</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
