@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import {
   AreaChart,
@@ -60,6 +60,11 @@ export default function OverviewPage() {
     queryKey: ["timeline", apiParams],
     queryFn: () => getTimeline(apiParams),
   })
+
+  const sortedSectors = useMemo(
+    () => [...(sectors ?? [])].sort((a, b) => b.close_rate - a.close_rate),
+    [sectors]
+  )
 
   async function handleGenerateInsights() {
     if (insights) {
@@ -164,7 +169,7 @@ export default function OverviewPage() {
             <div className="h-[180px] lg:h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={[...(sectors ?? [])].sort((a, b) => b.close_rate - a.close_rate)}
+                  data={sortedSectors}
                   layout="vertical"
                   margin={{ top: 4, right: 24, left: 8, bottom: 0 }}
                 >
@@ -179,9 +184,9 @@ export default function OverviewPage() {
                     ]}
                   />
                   <Bar dataKey="close_rate" name="Tasa de cierre" radius={[0, 4, 4, 0]}>
-                    {(sectors ?? []).map((s: { close_rate: number; sector: string }, i: number) => (
+                    {sortedSectors.map((s: { close_rate: number; sector: string }) => (
                       <Cell
-                        key={i}
+                        key={s.sector}
                         fill={s.close_rate >= 50 ? "#10b981" : s.close_rate >= 30 ? "#f59e0b" : "#f43f5e"}
                       />
                     ))}
