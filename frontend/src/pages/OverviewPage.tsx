@@ -8,11 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
+  Cell,
   Legend,
 } from "recharts"
 import { Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react"
@@ -22,10 +20,6 @@ import KPICard from "@/components/dashboard/KPICard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
-const COLORS = [
-  "#6366f1", "#22d3ee", "#f59e0b", "#10b981",
-  "#f43f5e", "#a78bfa", "#34d399", "#fb923c",
-]
 
 interface InsightData {
   hallazgos: string[]
@@ -161,39 +155,38 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Donut chart — sector distribution */}
+        {/* Bar chart — sector close rate + volume */}
         <Card>
           <CardHeader>
-            <CardTitle>Distribución por sector</CardTitle>
+            <CardTitle>Tasa de cierre por sector</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[180px] lg:h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={sectors ?? []}
-                    dataKey="total"
-                    nameKey="sector"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={2}
-                  >
-                    {(sectors ?? []).map((_: unknown, i: number) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
+                <BarChart
+                  data={[...(sectors ?? [])].sort((a, b) => b.close_rate - a.close_rate)}
+                  layout="vertical"
+                  margin={{ top: 4, right: 24, left: 8, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
+                  <YAxis type="category" dataKey="sector" tick={{ fontSize: 11 }} width={80} />
                   <Tooltip
-                    formatter={(v, name) => [v, name]}
                     contentStyle={{ fontSize: 12 }}
+                    formatter={(v, _name, props) => [
+                      `${v}% (${props.payload.closed}/${props.payload.total})`,
+                      "Cierre",
+                    ]}
                   />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(v) => <span style={{ fontSize: 11 }}>{v}</span>}
-                  />
-                </PieChart>
+                  <Bar dataKey="close_rate" name="Tasa de cierre" radius={[0, 4, 4, 0]}>
+                    {(sectors ?? []).map((s: { close_rate: number; sector: string }, i: number) => (
+                      <Cell
+                        key={i}
+                        fill={s.close_rate >= 50 ? "#10b981" : s.close_rate >= 30 ? "#f59e0b" : "#f43f5e"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
