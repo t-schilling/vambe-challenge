@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from app.database import AsyncSessionLocal
 from app.services.csv_processor import process_csv
 from app.config import settings
@@ -18,7 +18,12 @@ async def _run_processing(force: bool) -> None:
         _state["running"] = False
 
 
-@router.post("/process")
+def verify_process_key(x_api_key: str = Header(default=None)):
+    if settings.process_api_key and x_api_key != settings.process_api_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@router.post("/process", dependencies=[Depends(verify_process_key)])
 async def trigger_processing(
     background_tasks: BackgroundTasks,
     force: bool = Query(False, description="Re-categorize already processed clients"),
