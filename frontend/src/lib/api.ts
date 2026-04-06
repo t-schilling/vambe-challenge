@@ -19,6 +19,7 @@ export interface OverviewData {
   total_clients: number
   closed_count: number
   close_rate: number
+  avg_transcript_words: number
   avg_interaction_volume: number
   top_vendedor: string | null
   deep_count: number

@@ -3,6 +3,7 @@ interface SalespersonRow {
   total: number
   closed: number
   close_rate: number
+  avg_words: number
   meeting_depth_distribution: Record<string, number>
 }
 
@@ -156,6 +157,7 @@ export default function SalespersonPage() {
                   <th className="pb-2 pr-4 font-medium text-right">Reuniones</th>
                   <th className="pb-2 pr-4 font-medium text-right">Cerrados</th>
                   <th className="pb-2 pr-4 font-medium text-right">Tasa cierre</th>
+                  <th className="pb-2 pr-4 font-medium text-right">Avg palabras</th>
                   <th className="pb-2 pr-4 font-medium text-right">% Deep</th>
                 </tr>
               </thead>
@@ -170,6 +172,7 @@ export default function SalespersonPage() {
                         {r.close_rate}%
                       </span>
                     </td>
+                    <td className="py-2.5 pr-4 text-right">{r.avg_words.toLocaleString()}</td>
                     <td className="py-2.5 pr-4 text-right">{r.pctDeep}%</td>
                   </tr>
                 ))}
