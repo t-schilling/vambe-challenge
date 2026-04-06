@@ -166,8 +166,7 @@ export default function OverviewPage() {
             <CardTitle>Tasa de cierre por sector</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[180px] lg:h-[240px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={Math.max(180, sortedSectors.length * 32)}>
                 <BarChart
                   data={sortedSectors}
                   layout="vertical"
@@ -192,8 +191,7 @@ export default function OverviewPage() {
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
